@@ -62,7 +62,7 @@
 %----------------------------------------------------------------------------------------
 
 \HRule \\[0.4cm]
-{ \huge \bfseries Electical Motor Something Something}\\[0.2cm] % Title of your document
+{ \huge \bfseries Electical Motor Something}\\[0.2cm] % Title of your document
 \HRule \\[1.5cm]
  
 %----------------------------------------------------------------------------------------
@@ -128,24 +128,44 @@ The main obective is to create a lightweight model to predict the pm and stator 
 \section{Datasets}
 The data set can be found on Kaggle on the following link\footnote{\href{https://www.kaggle.com/wkirgsn/electric-motor-temperature}{https://www.kaggle.com/wkirgsn/electric-motor-temperature}}.
 From the data set the torque is immediately excluded, this particular variable is considered unreliable from the data set provider itself.
-
-The data set is divided into train-validation-test, the validation data consists of profile\_id included in $20,31,46,54, 62, 70, 79, 72$, the test set in $35, 42$ and the training set consists of all the other profiles. Their relative distributions are plotting in the Figure \ref{fig:dist_plot}.
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=10cm]{imgs/dist_plot.png}
     \caption{Distribution of the variables grouped by the division}
     \label{fig:dist_plot}
 \end{figure}\\
+The data set is divided into train-validation-test, the validation data consists of profile\_id included in $20,31,46,54, 62, 70, 79, 72$, the test set profiles are $35$ and $42$ and the training set consists of all the other profiles. Their relative distributions are plotting in the Figure \ref{fig:dist_plot}.\\
 In the Figure \ref{fig:corrplot} the correlation between the variables is shown. The target variables are highly correlated among themselves in particular the stator variables.
 \begin{figure}[!h]
     \centering
-    \includegraphics[width=10cm, height=10cm]{imgs/corrplot.png}
+    \includegraphics[width=\linewidth, height=10cm]{imgs/corrplot.png}
     \caption{Correlation Plot of the considered variables}
     \label{fig:corrplot}
 \end{figure}\\
 The data was already standardized but the variables doesn't have a normal distribution thus a normalization between 0 and 1 (using only the training set) is applied.
 
 \section{The Methodological Approach}
+
+Different models are tried in order to compare and choose the best one, the models tried are:
+\begin{itemize}[topsep=0ex, noitemsep]
+    \item RNN with embedding 
+    \item LSTM
+    \item GRU
+    \item CNN
+\end{itemize}
+They will be described one by one.
+
+\subsection{RNN with embedding}
+
+\subsection{LSTM}
+
+\subsection{GRU}
+
+\subsection{CNN}
+
+
+
+
 
 This is the central and most important section of the report. Its objective must be to show, with linearity and clarity, the steps that have led to the definition of a decision model. The description of the working hypotheses, confirmed or denied, can be found in this section together with the description of the subsequent refining processes of the models. Comparisons between different models (e.g. heuristics vs. optimal models) in terms of quality of solutions, their explainability and execution times are welcome. 
 
