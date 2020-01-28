@@ -1,4 +1,4 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % University Assignment Title Page 
 % LaTeX Template
 % Version 1.0 (27/12/12)
@@ -38,7 +38,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{enumitem}
-
+\usepackage{minted}
 \usepackage[colorinlistoftodos]{todonotes}
 
 \begin{document}
@@ -62,7 +62,7 @@
 %----------------------------------------------------------------------------------------
 
 \HRule \\[0.4cm]
-{ \huge \bfseries Electical Motor Something}\\[0.2cm] % Title of your document
+{ \huge \bfseries Electical Motor Temperature}\\[0.2cm] % Title of your document
 \HRule \\[1.5cm]
  
 %----------------------------------------------------------------------------------------
@@ -71,9 +71,10 @@
 
 \large
 \emph{Authors:}\\
-Federico Moiraghi - xxxxxx - f.xx@@campus.unimib.it\\
-Pranav Kasela - 846965 - p.kasela@campus.unimib.it \\   % Your name
-Roberto Berlucchi - xxxxxx - r.xx@@campus.unimib.it   \\[0.5cm] % Your name
+Federico Moiraghi - 799735 - f.moiraghimotta@campus.unimib.it \\
+Pranav Kasela - 846965 - p.kasela@campus.unimib.it \\
+Roberto Berlucchi - xxxxxx - r.xx@@campus.unimib.it \\
+[0.5cm] % Your name
 
 % If you don't want a supervisor, uncomment the two lines below and remove the section above
 %\Large \emph{Author:}\\
@@ -99,7 +100,8 @@ Roberto Berlucchi - xxxxxx - r.xx@@campus.unimib.it   \\[0.5cm] % Your name
 
 
 \begin{abstract}
-The ABSTRACT is not a part of the body of the report itself. Rather, the abstract is a brief summary of the report contents that is often separately circulated so potential readers can decide whether to read the report. The abstract should very concisely summarize the whole report: why it was written, what was discovered or developed, and what is claimed to be the significance of the effort. The abstract does not include figures or tables, and only the most significant numerical values or results should be given.
+  The present Report is a summary of methodologies used to predict the temperature of various part of a prototype electrical motor given some tests on a bench.
+  The resulting model have to yield acceptable predictions and to be light enough to be used by the car itself during its daily use: autos with this motor have to start cooling components before the temperature becomes critical.
 \end{abstract}
 
 \section{Introduction}
@@ -107,7 +109,7 @@ The data set comprises several sensor data collected from a permanent magnet syn
 The PMSM represents a German OEM's prototype model. 
 Test bench measurements were collected by the LEA department at Paderborn University.
 
-The recordings are sampled at a frequency of 2 Hz and is divided in various profiles and has a total of $998070$ observations. 
+The recordings are sampled at a frequency of $2Hz$ and is divided in various profiles and has a total of $998070$ observations. 
 Each profile indicates a different session and each session can have different length varying from one to six hours.\\
 The input variables are:
 \begin{itemize}[topsep=0ex, noitemsep]
@@ -120,42 +122,44 @@ The input variables are:
 The target variables are:
 \begin{itemize}[topsep=0ex, noitemsep]
     \item \textbf{pm}: Permanent Magnet surface temperature representing the rotor temperature, measured with an infrared thermography unit.
-    \item \textbf{stator\_yoke}, \textbf{stator\_tooth}, \textbf{stator\_winding} respectively stator yoke, tooth and winding temperature measured with a thermal sensor.
+    \item \textbf{stator\_yoke}, \textbf{stator\_tooth}, \textbf{stator\_winding} temperature measured with a thermal sensor of the corresponding components.
 \end{itemize}
-In some of the variables some random walks are introduced to simulate real world driving cycles.\\
-The main obective is to create a lightweight model to predict the pm and stator variables minimizing the MSE because the model needs to be deployed using the model with best cost-precision ratio, a secondary objective is to predict more accurately higher temperature than the lower temperature using a modified loss.
+In some of the variables, gaussian noise is introduced to simulate real world driving cycles.\\
+The main objective is to create a lightweight model to predict the \verb|pm| and \verb|stator| variables minimizing the MSE (because the model needs to be deployed with best cost-precision ratio); a secondary objective is to predict more accurately higher temperature than the lower temperature using a modified loss.
 
 \section{Datasets}
-The data set can be found on Kaggle on the following link\footnote{\href{https://www.kaggle.com/wkirgsn/electric-motor-temperature}{https://www.kaggle.com/wkirgsn/electric-motor-temperature}}.
-From the data set the torque is immediately excluded, this particular variable is considered unreliable from the data set provider itself.
+The data set can be found on Kaggle\footnote{\href{https://www.kaggle.com/wkirgsn/electric-motor-temperature}{https://www.kaggle.com/wkirgsn/electric-motor-temperature}}.
+From the data set the \verb|torque| feature is immediately excluded, as it is considered unreliable from the data set provider itself.
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=10cm]{imgs/dist_plot.png}
     \caption{Distribution of the variables grouped by the division}
     \label{fig:dist_plot}
 \end{figure}\\
-The data set is divided into train-validation-test, the validation data consists of profile\_id included in $20,31,46,54, 62, 70, 79, 72$, the test set profiles are $35$ and $42$ and the training set consists of all the other profiles. Their relative distributions are plotting in the Figure \ref{fig:dist_plot}.\\
-In the Figure \ref{fig:corrplot} the correlation between the variables is shown. The target variables are highly correlated among themselves in particular the stator variables.
+The data set is divided into train, validation and test set: validation data consists of \verb|profile_id|s $20, 31, 46, 54, 62, 70, 79, 72$, the test set profiles are $35$ and $42$ and the training set consists of all the other profiles.
+Their relative distributions are plotting in the Figure \ref{fig:dist_plot}.\\
+In the Figure \ref{fig:corrplot} the correlation between the variables is shown.
+The target variables are highly correlated among themselves in particular the \verb|stator| variables.
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=10cm]{imgs/corrplot.png}
     \caption{Correlation Plot of the considered variables}
     \label{fig:corrplot}
 \end{figure}\\
-The data was already standardized but the variables doesn't have a normal distribution thus a normalization between 0 and 1 (using only the training set) is applied.
+Data was already standardized by the provider, but variables do not have a normal distribution thus a normalization between 0 and 1 (calculated only on the training set) is applied.
 
 \section{The Methodological Approach}
+Different \textit{Deep Learning} architectures are tried in order to compare them and choose the most suitable model to the problem: each model is optimized with an Auto-ML algorithm using Python \mintinline{python}|sherpa| optimization library and then is analyzed in depth.
 
-Different models are tried in order to compare and choose the best one, the models tried are:
-\begin{itemize}[topsep=0ex, noitemsep]
-    \item RNN with embedding 
-    \item LSTM
-    \item GRU
-    \item CNN
-\end{itemize}
-They will be described one by one.
+All models are implemented Sequence to Value (Seq2Val) so that the training process can be paralleled and shuffled, with improvements in both speed and quality.
+In addition, a Sequence to Value model can be easily rewritten as Sequence to Sequence, providing real-time information to the driver.
 
-\subsection{RNN with embedding}
+
+\subsection{RNN}
+In order to accomplish both tasks with a lightweight model easily usable by a car, a simple Recurrent Neural Network is implemented: this model is provided with one hidden layer that depends on both current data and previous observations, and uses it to estimate the target variables.
+After the hidden layer, data flows through two independent feed-forward neural networks (with two layers both) to estimate values for \verb|pm| and \verb|stator|s variables: this approach is justified by the higher correlation between \verb|stator| temperatures and lower correlation with \verb|pm|.
+
+Which layer (the previous input, the estimated output or the embedding) the RNN yields to the next step and how to use this information (where it is linked) are parameters settable in the model construction and optimized through Auto-ML; in addition, \textit{learning rate}, number of neurons per hidden layer, and length of the input sequence are optimized in the same way: to do so, the \mintinline{python}|Custom_RNN.forward()| method is implemented recursively to make it as adaptable as possible.
 
 \subsection{LSTM}
 
