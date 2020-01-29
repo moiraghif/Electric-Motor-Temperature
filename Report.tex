@@ -101,7 +101,7 @@ Roberto Berlucchi - xxxxxx - r.xx@@campus.unimib.it \\
 
 \begin{abstract}
   The present Report is a summary of methodologies used to predict the temperature of various part of a prototype electrical motor given some tests on a bench.
-  The resulting model have to yield acceptable predictions and to be light enough to be used by the car itself during its daily use: autos with this motor have to start cooling components before the temperature becomes critical.
+  The resulting model have to yield acceptable predictions and to be light enough to be used by the car itself during its daily use: autos can start cooling components before the temperature grows critically (first task) or can estimate temperature without a specific sensor (second task), due to its cost and weakness, knowing only basic environmental information.
 \end{abstract}
 
 \section{Introduction}
@@ -124,7 +124,8 @@ The target variables are:
     \item \textbf{pm}: Permanent Magnet surface temperature representing the rotor temperature, measured with an infrared thermography unit.
     \item \textbf{stator\_yoke}, \textbf{stator\_tooth}, \textbf{stator\_winding} temperature measured with a thermal sensor of the corresponding components.
 \end{itemize}
-In some of the variables, gaussian noise is introduced to simulate real world driving cycles.\\
+In some of the variables, gaussian noise is introduced to simulate real world driving cycles.
+Being sensors data, missing values are replaced by the provider with the previous one, causing some flat areas when sensors fall offline for a long period. \\
 The main objective is to create a lightweight model to predict the \verb|pm| and \verb|stator| variables minimizing the MSE (because the model needs to be deployed with best cost-precision ratio); a secondary objective is to predict more accurately higher temperature than the lower temperature using a modified loss.
 
 \section{Datasets}
@@ -139,7 +140,7 @@ From the data set the \verb|torque| feature is immediately excluded, as it is co
 The data set is divided into train, validation and test set: validation data consists of \verb|profile_id|s $20, 31, 46, 54, 62, 70, 79, 72$, the test set profiles are $35$ and $42$ and the training set consists of all the other profiles.
 Their relative distributions are plotting in the Figure \ref{fig:dist_plot}.\\
 In the Figure \ref{fig:corrplot} the correlation between the variables is shown.
-The target variables are highly correlated among themselves in particular the \verb|stator| variables.
+The target variables are highly correlated among themselves, in particular the \verb|stator| variables.
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=10cm]{imgs/corrplot.png}
@@ -149,51 +150,63 @@ The target variables are highly correlated among themselves in particular the \v
 Data was already standardized by the provider, but variables do not have a normal distribution thus a normalization between 0 and 1 (calculated only on the training set) is applied.
 
 \section{The Methodological Approach}
-Different \textit{Deep Learning} architectures are tried in order to compare them and choose the most suitable model to the problem: each model is optimized with an Auto-ML algorithm using Python \mintinline{python}|sherpa| optimization library and then is analyzed in depth.
+Different \textit{Deep Learning} architectures are tried in order to compare them and choose the most suitable model to the problem: each model built using \mintinline{python}|pytorch| and optimized with an Auto-ML algorithm using \mintinline{python}|sherpa| optimization library.
 
-All models are implemented Sequence to Value (Seq2Val) so that the training process can be paralleled and shuffled, with improvements in both speed and quality.
+All models are implemented as Sequence to Value (Seq2Val) so that the training process can be paralleled and shuffled, with improvements in both speed and quality.
 In addition, a Sequence to Value model can be easily rewritten as Sequence to Sequence, providing real-time information to the driver.
 
 
-\subsection{RNN}
+\paragraph{RNN}
 In order to accomplish both tasks with a lightweight model easily usable by a car, a simple Recurrent Neural Network is implemented: this model is provided with one hidden layer that depends on both current data and previous observations, and uses it to estimate the target variables.
 After the hidden layer, data flows through two independent feed-forward neural networks (with two layers both) to estimate values for \verb|pm| and \verb|stator|s variables: this approach is justified by the higher correlation between \verb|stator| temperatures and lower correlation with \verb|pm|.
 
 Which layer (the previous input, the estimated output or the embedding) the RNN yields to the next step and how to use this information (where it is linked) are parameters settable in the model construction and optimized through Auto-ML; in addition, \textit{learning rate}, number of neurons per hidden layer, and length of the input sequence are optimized in the same way: to do so, the \mintinline{python}|Custom_RNN.forward()| method is implemented recursively to make it as adaptable as possible.
 
-\subsection{LSTM}
+\paragraph{LSTM}
 
-\subsection{GRU}
+\paragraph{GRU}
 
-\subsection{CNN}
-
-
+\paragraph{CNN}
 
 
 
-This is the central and most important section of the report. Its objective must be to show, with linearity and clarity, the steps that have led to the definition of a decision model. The description of the working hypotheses, confirmed or denied, can be found in this section together with the description of the subsequent refining processes of the models. Comparisons between different models (e.g. heuristics vs. optimal models) in terms of quality of solutions, their explainability and execution times are welcome. 
+
+
+% This is the central and most important section of the report. Its objective must be to show, with linearity and clarity, the steps that have led to the definition of a decision model. The description of the working hypotheses, confirmed or denied, can be found in this section together with the description of the subsequent refining processes of the models. Comparisons between different models (e.g. heuristics vs. optimal models) in terms of quality of solutions, their explainability and execution times are welcome. 
 
 %inifinitive generator!?
-You should also mention any unforeseen problems you encountered when implementing the
-system and how and to what extent you overcame them. Common problems are:
- difficulties involving existing software.
+% You should also mention any unforeseen problems you encountered when implementing the system and how and to what extent you overcame them. Common problems are:  difficulties involving existing software.
 
 
-\section{Results and Evaluation}
-The Results section is dedicated to presenting the actual results (i.e. measured and calculated quantities), not to discussing their meaning or interpretation. The results should be summarized using appropriate Tables and Figures (graphs or schematics). Every Figure and Table should have a legend that describes concisely what is contained or shown. Figure legends go below the figure, table legends above the table. Throughout the report, but especially in this section, pay attention to reporting numbers with an appropriate number of significant figures. 
+ \section{Results and Evaluation}
+ 
+\subsection{First Task}
+As shown in figure \ref{fig:automl_mse}, after the optimization process LSTM and GRU yield similar results (having a similar structure), while CNN provides results comparable with the previous architecture.
+RNN however yields poor previsions, due to its simplicity, compared to other architectures.
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=\linewidth]{imgs/comparison_MSE.png}
+    \caption{Results of the optimization process (RNN is excluded due to its poor performance)}
+    \label{fig:automl_mse}
+\end{figure}\\
+
+However, comparing results using only the loss value is not satisfying for the task: the model have to be light enough to be easily used by a car: so architectures are plotted considering both number of parameters and performance.
+% TODO: performance ~ numero di parametri
+  
+% The Results section is dedicated to presenting the actual results (i.e. measured and calculated quantities), not to discussing their meaning or interpretation. The results should be summarized using appropriate Tables and Figures (graphs or schematics). Every Figure and Table should have a legend that describes concisely what is contained or shown. Figure legends go below the figure, table legends above the table. Throughout the report, but especially in this section, pay attention to reporting numbers with an appropriate number of significant figures. 
 
 \section{Discussion}
-The discussion section aims at interpreting the results in light of the project's objectives. The most important goal of this section is to interpret the results so that the reader is informed of the insight or answers that the results provide. This section should also present an evaluation of the particular approach taken by the group. For example: Based on the results, how could the experimental procedure be improved? What additional, future work may be warranted? What recommendations can be drawn?
+% The discussion section aims at interpreting the results in light of the project's objectives. The most important goal of this section is to interpret the results so that the reader is informed of the insight or answers that the results provide. This section should also present an evaluation of the particular approach taken by the group. For example: Based on the results, how could the experimental procedure be improved? What additional, future work may be warranted? What recommendations can be drawn?
 
 
 \section{Conclusions}
-Conclusions should summarize the central points made in the Discussion section, reinforcing for the reader the value and implications of the work. If the results were not definitive, specific future work that may be needed can be (briefly) described. The conclusions should never contain ``surprises''. Therefore, any conclusions should be based on observations and data already discussed. It is considered extremely bad form to introduce new data in the conclusions.
+% Conclusions should summarize the central points made in the Discussion section, reinforcing for the reader the value and implications of the work. If the results were not definitive, specific future work that may be needed can be (briefly) described. The conclusions should never contain ``surprises''. Therefore, any conclusions should be based on observations and data already discussed. It is considered extremely bad form to introduce new data in the conclusions.
 
 \section*{References}
 
-The references section should contain complete citations following standard form.  The references should be numbered and listed in the order they were cited in the body of the report. In the text of the report, a particular reference can be cited by using a numerical number in brackets as \cite{Lee2015} that corresponds to its number in the reference list. \LaTeX provides several styles to format the references
+% The references section should contain complete citations following standard form.  The references should be numbered and listed in the order they were cited in the body of the report. In the text of the report, a particular reference can be cited by using a numerical number in brackets as \cite{Lee2015} that corresponds to its number in the reference list. \LaTeX provides several styles to format the references
 
 \bibliographystyle{IEEEtran}
-\bibliography{references.bib}
+% \bibliography{references.bib}
 
 \end{document}
