@@ -105,7 +105,7 @@ Roberto Berlucchi - xxxxxx - r.xx@@campus.unimib.it \\
 \end{abstract}
 
 \section{Introduction}
-The data set comprises several sensor data collected from a permanent magnet synchronous motor (PMSM) deployed on a test bench. 
+The data set comprises several sensor data collected from a permanent magnet synchronous motor (PMSM) deployed on a test bench.
 The PMSM represents a German OEM's prototype model. 
 Test bench measurements were collected by the LEA department at Paderborn University.
 
@@ -113,7 +113,7 @@ The recordings are sampled at a frequency of $2Hz$ and is divided in various pro
 Each profile indicates a different session and each session can have different length varying from one to six hours.\\
 The input variables are:
 \begin{itemize}[topsep=0ex, noitemsep]
-    \item \textbf{Ambient temperature} as measured by a thermal sensor located closely to the stator;
+    \item \textbf{Ambient temperature} as measured by a thermal sensor located close to the stator;
     \item \textbf{Coolant temperature}, the motor is water cooled and the measurement is taken at outflow;
     \item The current and voltage are transformed through a $dq0$ transformation in a d-q coordinate system, it basically converts a three phase balanced reference system (in an AC system) into 2 coordinates, denoted by d and q, via a rotating reference frame with angle $\theta$.
     The currents are denoted by \textbf{i\_d} and \textbf{i\_q} and the voltages are denoted by \textbf{u\_d} and \textbf{u\_q};
@@ -138,19 +138,21 @@ From the data set the \verb|torque| feature is immediately excluded, as it is co
     \label{fig:dist_plot}
 \end{figure}\\
 The data set is divided into train, validation and test set: validation data consists of \verb|profile_id|s $20, 31, 46, 54, 62, 70, 79, 72$, the test set profiles are $35$ and $42$ and the training set consists of all the other profiles.
-Their relative distributions are plotting in the Figure \ref{fig:dist_plot}.\\
+Their relative distributions are plotted in the Figure \ref{fig:dist_plot}.\\
 In the Figure \ref{fig:corrplot} the correlation between the variables is shown.
 The target variables are highly correlated among themselves, in particular the \verb|stator| variables.
 \begin{figure}[!h]
     \centering
-    \includegraphics[width=\linewidth, height=10cm]{imgs/corrplot.png}
+    \includegraphics[width=\linewidth, height=7cm]{imgs/corrplot.png}
     \caption{Correlation Plot of the considered variables}
     \label{fig:corrplot}
 \end{figure}\\
-Data was already standardized by the provider, but variables do not have a normal distribution thus a normalization between 0 and 1 (calculated only on the training set) is applied.
+Data was already standardized by the provider (for some anonymization issues), but variables do not have a normal distribution thus a further normalization between 0 and 1 (calculated only on the training set) is applied.
+
+For each profile the data set is modified: to each row the lagged features is concatenated, the number of lags to keep can be changed, after this procedure the rows of all the profiles are united and shuffled through a custom data loader.
 
 \section{The Methodological Approach}
-Different \textit{Deep Learning} architectures are tried in order to compare them and choose the most suitable model to the problem: each model built using \mintinline{python}|pytorch| and optimized with an Auto-ML algorithm using \mintinline{python}|sherpa| optimization library.
+Different \textit{Deep Learning} architectures are tried in order to compare them and choose the most suitable model to the problem: each model built using \mintinline{python}|pytorch| and optimized with an Auto-ML algorithm using \mintinline{python}|sherpa| optimization library, in particular the GP surrogate model is used with the EI acquisition function to have some exploration during the optimization.
 
 All models are implemented as Sequence to Value (Seq2Val) so that the training process can be paralleled and shuffled, with improvements in both speed and quality.
 In addition, a Sequence to Value model can be easily rewritten as Sequence to Sequence, providing real-time information to the driver.
@@ -162,9 +164,14 @@ After the hidden layer, data flows through two independent feed-forward neural n
 
 Which layer (the previous input, the estimated output or the embedding) the RNN yields to the next step and how to use this information (where it is linked) are parameters settable in the model construction and optimized through Auto-ML; in addition, \textit{learning rate}, number of neurons per hidden layer, and length of the input sequence are optimized in the same way: to do so, the \mintinline{python}|Custom_RNN.forward()| method is implemented recursively to make it as adaptable as possible.
 
-\paragraph{LSTM}
+\paragraph{LSTM and GRU}
+Two more type of recursive neural architecture are tested, the first one uses a LSTM layer while the other uses a GRU layer instead.
+In this case two independent models are created: one to predict only the \verb|pm| variable and one to predict the 3 \verb|stator|s variables.
 
-\paragraph{GRU}
+In this case the window is fixed to 60 lags and it does not need to be optimized, since the LSTM and GRU should automatically understand how many lags are important.
+The model is pretty simple (as required by the task), it has one recursive layer (either LSTM or GRU) followed by two fully connected layer, the second fully connected layer can be omitted if the number of neurons are 0, lastly there is the output layer which has one neuron while predicting \verb|pm| and three neurons while predicting \verb|stator|s.
+
+The hyperparameter optimizer need to optimize the number of hidden units, the number of neurons for each fully connected layer, the learning rate and the batch size of the data.
 
 \paragraph{CNN}
 
