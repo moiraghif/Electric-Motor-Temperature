@@ -152,12 +152,15 @@ Data was already standardized by the provider (for some anonymization issues), b
 For each profile the data set is modified: to each row the lagged features is concatenated, the number of lags to keep can be changed, after this procedure the rows of all the profiles are united and shuffled through a custom data loader.
 
 \section{The Methodological Approach}
-Different \textit{Deep Learning} architectures are tried in order to compare them and choose the most suitable model to the problem: each model built using \mintinline{python}|pytorch| and optimized with an Auto-ML algorithm using \mintinline{python}|sherpa| optimization library, in particular the GP surrogate model is used with the EI acquisition function to have some exploration during the optimization.
+Different \textit{Deep Learning} architectures are tried in order to compare them and choose the most suitable model to the problem: each model built using \mintinline{python}|pytorch| and optimized with an Auto-ML algorithm using \mintinline{python}|sherpa| optimization library.
+In particular the \textit{Gaussian Process} (GP) surrogate model is used with the \textit{Expected Improvement} (EI) acquisition function to have a better exploration during the optimization.
 
+Each model is optimized using standard \textit{Mean Squared Error} (MSE) in a first trial and than re-optimized using a custom weighted-version that assigns a triple importance to temperatures that reach the value of the median (computed on the train set).
+
+\subsection{Models}
 All models are implemented as Sequence to Value (Seq2Val) so that the training process can be paralleled and shuffled, with improvements in both speed and quality.
-In addition, a Sequence to Value model can be easily rewritten as Sequence to Sequence, providing real-time information to the driver.
+In addition, a Sequence to Value model can be easily rewritten as Sequence to Sequence (Seq2Seq), providing real-time information to the driver.
 
-\subsection{First Task}
 \paragraph{RNN}
 In order to accomplish both tasks with a lightweight model easily usable by a car, a simple Recurrent Neural Network is implemented: this model is provided with one hidden layer that depends on both current data and previous observations, and uses it to estimate the target variables.
 After the hidden layer, data flows through two independent feed-forward neural networks (with two layers both) to estimate values for \verb|pm| and \verb|stator|s variables: this approach is justified by the higher correlation between \verb|stator| temperatures and lower correlation with \verb|pm|.
@@ -169,7 +172,7 @@ Two more type of recursive neural architecture are tested, the first one uses a 
 In this case two independent models are created: one to predict only the \verb|pm| variable and one to predict the 3 \verb|stator|s variables.
 
 In this case the window is fixed to 60 lags and it does not need to be optimized, since the LSTM and GRU should automatically understand how many lags are important.
-The model is pretty simple (as required by the task), it has one recursive layer (either LSTM or GRU) followed by two fully connected layer, the second fully connected layer can be omitted if the number of neurons are 0, lastly there is the output layer which has one neuron while predicting \verb|pm| and three neurons while predicting \verb|stator|s.
+The model is pretty simple (as required by the task): it has one recursive layer (either LSTM or GRU) followed by two fully connected layer, the second fully connected layer can be omitted if the number of neurons are 0, lastly there is the output layer which has one neuron while predicting \verb|pm| and three neurons while predicting \verb|stator|s.
 
 The hyperparameter optimizer need to optimize the number of hidden units, the number of neurons for each fully connected layer, the learning rate and the batch size of the data.
 The objective score is MSE and it is calculated, after one epoch of the training set, on the validation set.
@@ -178,6 +181,15 @@ The objective score is MSE and it is calculated, after one epoch of the training
 %roby explain your convolution idea!!
 The convolutions happens a temporal moment, i.e. it convolves on all the variables of a certain time t.
 
+\subsection{Dataloaders}
+To avoid giving all input and output matrix to the model, two ad-hoc dataloaders are programmed to optimize the learning process.
+Belonging to various independent series, data is represented internally as a sequence of tuples $<id_{serie}, id_{observation}>$ so that can be easily shuffled and yielded to the model (without side-effects) using an arbitrary large batch size.
+
+\paragraph{First Task}
+To accomplish the first task, data in given to the algorithm so that input matrix contains all values of all features and target variables throw the temporal window (starting from an arbitrary moment in the past $t_{-max}$ to the previous observation $t_{-1}$), while target vector contains following values of only target variables at time $t_0$.
+
+\paragraph{Second Task}
+For the second task instead, dataloaders yield a input matrix containing only features values for a window time starting in a moment $t_{max}$ to $t_0$; in addition a vector of values of target variables at time $t_0$ is given as ground truth.
 % This is the central and most important section of the report. Its objective must be to show, with linearity and clarity, the steps that have led to the definition of a decision model. The description of the working hypotheses, confirmed or denied, can be found in this section together with the description of the subsequent refining processes of the models. Comparisons between different models (e.g. heuristics vs. optimal models) in terms of quality of solutions, their explainability and execution times are welcome. 
 
 %inifinitive generator!?
@@ -201,7 +213,8 @@ However, comparing results using only the loss value is not satisfying for the t
 % TODO: performance ~ numero di parametri
 
 
-For the secondary task to improve the prediction a weighted MSE where the weights depend on the target value, in particular unitary weight is used for values under 0.5 and a weight of 3 is used for values over 0.5, the results of hyperparameter optimization are shown in the figure \ref{fig:automl_custom}.
+In addition, to improve predictions of critical temperatures it is used a weighted version of MSE (where weights depend on the target value): unitary weight is used for values under 0.5 and a weight of 3 is used for values over 0.5.
+Results of hyperparameter optimization are shown in the figure \ref{fig:automl_custom}.
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_new_loss.png}
@@ -210,7 +223,7 @@ For the secondary task to improve the prediction a weighted MSE where the weight
 \end{figure}\\
   
 \subsection{Second Task}
-
+For the secondary task (predicting motor temperature without knowing previous values) results of hyperparameters optimization are the following:
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_second.png}
