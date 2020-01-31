@@ -21,6 +21,44 @@ prepare_for_comparison <- function(rnn, lstm, gru, cnn)
            gru =  cummin(gru$Objective),
            cnn =  cummin(cnn$Objective))
 
+plot_comparison <- function(data, y_min, y_max, title)
+    ggplot(data, aes()) +
+        # geom_line(aes(iteration,  rnn,  colour = "rnn")) +
+        # geom_point(aes(iteration, rnn,  colour = "rnn")) +
+        geom_line(aes(iteration,  lstm, colour = "lstm")) +
+        geom_point(aes(iteration, lstm, colour = "lstm")) +
+        geom_line(aes(iteration,  gru,  colour = "gru")) +
+        geom_point(aes(iteration, gru,  colour = "gru")) +
+        geom_line(aes(iteration,  cnn,  colour = "cnn")) +
+        geom_point(aes(iteration, cnn,  colour = "cnn")) +
+        xlab("Iteration") +
+        ylab("Best found") +
+        scale_fill_manual(values = c("rnn" = "#009E73",
+                                     "lstm" = "#D55E00",
+                                     "gru" = "#E69F00",
+                                     "cnn" = "#56B4E9")) +
+        ylim(y_min, y_max) + 
+        ggtitle(title)+  theme(plot.title = element_text(hjust = 0.5))
+
+
+log_rnn  <- read_clean("./results/AutoML_RNN_MSE.csv")
+log_lstm <- read_clean("./results/AutoML_LSTM.csv")
+log_gru  <- read_clean("./results/AutoML_GRU.csv")
+log_cnn  <- read_clean("./results/AutoML_CNN.csv")
+prepare_for_comparison(log_rnn, log_lstm, log_gru, log_cnn) %>%
+    plot_comparison(NA, 1e-5, "pm variable") %>%
+    ggsave(filename = "./imgs/comparison_MSE.png", device = png(),
+           width = 15, height = 5)
+
+log_rnn  <- read_clean("./results/AutoML_RNN_MSE.csv")
+log_lstm <- read_clean("./results/AutoML_LSTM_stator.csv")
+log_gru  <- read_clean("./results/AutoML_GRU_stator.csv")
+log_cnn  <- read_clean("./results/AutoML_CNN_stator.csv")
+prepare_for_comparison(log_rnn, log_lstm, log_gru, log_cnn) %>%
+    plot_comparison(NA, 7e-5, "stator variables") %>%
+    ggsave(filename = "./imgs/comparison_MSE_stator.png", device = png(),
+           width = 15, height = 5)
+
 plot_comparison <- function(data, y_min, y_max)
     ggplot(data, aes()) +
         # geom_line(aes(iteration,  rnn,  colour = "rnn")) +
@@ -38,17 +76,6 @@ plot_comparison <- function(data, y_min, y_max)
                                      "gru" = "#E69F00",
                                      "cnn" = "#56B4E9")) +
         ylim(y_min, y_max)
-
-
-log_rnn  <- read_clean("./results/AutoML_RNN_MSE.csv")
-log_lstm <- read_clean("./results/AutoML_LSTM.csv")
-log_gru  <- read_clean("./results/AutoML_GRU.csv")
-log_cnn  <- read_clean("./results/AutoML_CNN.csv")
-prepare_for_comparison(log_rnn, log_lstm, log_gru, log_cnn) %>%
-    plot_comparison(NA, 1e-5) %>%
-    ggsave(filename = "./imgs/comparison_MSE.png", device = png(),
-           width = 15, height = 5)
-
 
 log_rnn  <- read_clean("./results/AutoML_RNN_CustomLoss.csv")
 log_lstm <- read_clean("./results/AutoML_LSTM_new_loss.csv")

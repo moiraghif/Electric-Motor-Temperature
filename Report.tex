@@ -130,7 +130,7 @@ The main objective is to create a lightweight model to predict the \verb|pm| and
 
 \section{Datasets}
 The data set can be found on Kaggle\footnote{\href{https://www.kaggle.com/wkirgsn/electric-motor-temperature}{https://www.kaggle.com/wkirgsn/electric-motor-temperature}}.
-From the data set the \verb|torque| feature is immediately excluded, as it is considered unreliable from the data set provider itself.
+From the data set the \verb|torque| feature is immediately excluded, as it is deemed unreliable from the data set provider itself.
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=10cm]{imgs/dist_plot.png}
@@ -157,7 +157,7 @@ Different \textit{Deep Learning} architectures are tried in order to compare the
 All models are implemented as Sequence to Value (Seq2Val) so that the training process can be paralleled and shuffled, with improvements in both speed and quality.
 In addition, a Sequence to Value model can be easily rewritten as Sequence to Sequence, providing real-time information to the driver.
 
-
+\subsection{First Task}
 \paragraph{RNN}
 In order to accomplish both tasks with a lightweight model easily usable by a car, a simple Recurrent Neural Network is implemented: this model is provided with one hidden layer that depends on both current data and previous observations, and uses it to estimate the target variables.
 After the hidden layer, data flows through two independent feed-forward neural networks (with two layers both) to estimate values for \verb|pm| and \verb|stator|s variables: this approach is justified by the higher correlation between \verb|stator| temperatures and lower correlation with \verb|pm|.
@@ -172,12 +172,11 @@ In this case the window is fixed to 60 lags and it does not need to be optimized
 The model is pretty simple (as required by the task), it has one recursive layer (either LSTM or GRU) followed by two fully connected layer, the second fully connected layer can be omitted if the number of neurons are 0, lastly there is the output layer which has one neuron while predicting \verb|pm| and three neurons while predicting \verb|stator|s.
 
 The hyperparameter optimizer need to optimize the number of hidden units, the number of neurons for each fully connected layer, the learning rate and the batch size of the data.
+The objective score is MSE and it is calculated, after one epoch of the training set, on the validation set.
 
 \paragraph{CNN}
-
-
-
-
+%roby explain your convolution idea!!
+The convolutions happens a temporal moment, i.e. it convolves on all the variables of a certain time t.
 
 % This is the central and most important section of the report. Its objective must be to show, with linearity and clarity, the steps that have led to the definition of a decision model. The description of the working hypotheses, confirmed or denied, can be found in this section together with the description of the subsequent refining processes of the models. Comparisons between different models (e.g. heuristics vs. optimal models) in terms of quality of solutions, their explainability and execution times are welcome. 
 
@@ -185,21 +184,39 @@ The hyperparameter optimizer need to optimize the number of hidden units, the nu
 % You should also mention any unforeseen problems you encountered when implementing the system and how and to what extent you overcame them. Common problems are:  difficulties involving existing software.
 
 
- \section{Results and Evaluation}
+\section{Results and Evaluation}
  
 \subsection{First Task}
 As shown in figure \ref{fig:automl_mse}, after the optimization process LSTM and GRU yield similar results (having a similar structure), while CNN provides results comparable with the previous architecture.
 RNN however yields poor previsions, due to its simplicity, compared to other architectures.
 \begin{figure}[!h]
     \centering
-    \includegraphics[width=\linewidth]{imgs/comparison_MSE.png}
-    \caption{Results of the optimization process (RNN is excluded due to its poor performance)}
+    \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE.png}
+    \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_stator.png}
+    \caption{Results of the optimization process on the pm and the three stator variables respectively using the MSE (RNN is excluded due to its poor performance)}
     \label{fig:automl_mse}
 \end{figure}\\
 
 However, comparing results using only the loss value is not satisfying for the task: the model have to be light enough to be easily used by a car: so architectures are plotted considering both number of parameters and performance.
 % TODO: performance ~ numero di parametri
+
+
+For the secondary task to improve the prediction a weighted MSE where the weights depend on the target value, in particular unitary weight is used for values under 0.5 and a weight of 3 is used for values over 0.5, the results of hyperparameter optimization are shown in the figure \ref{fig:automl_custom}.
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_new_loss.png}
+    \caption{Results of the optimization process using a custom loss (RNN is excluded due to its poor performance)}
+    \label{fig:automl_custom}
+\end{figure}\\
   
+\subsection{Second Task}
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_second.png}
+    \caption{Result of the optimization for the second task}
+    \label{fig:second_task}
+\end{figure}  
 % The Results section is dedicated to presenting the actual results (i.e. measured and calculated quantities), not to discussing their meaning or interpretation. The results should be summarized using appropriate Tables and Figures (graphs or schematics). Every Figure and Table should have a legend that describes concisely what is contained or shown. Figure legends go below the figure, table legends above the table. Throughout the report, but especially in this section, pay attention to reporting numbers with an appropriate number of significant figures. 
 
 \section{Discussion}
