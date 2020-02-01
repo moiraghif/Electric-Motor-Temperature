@@ -149,13 +149,13 @@ The target variables are highly correlated among themselves, in particular the \
     \label{fig:corrplot}
 \end{figure}\\
 Data was already standardized by the provider (for some anonymization issues), but variables do not have a normal distribution thus a further normalization between 0 and 1 (calculated only on the training set) is applied.\\
-For each profile the data set is modified: to each row the lagged features is concatenated, the number of lags to keep can be changed, after this procedure the rows of all the profiles are united and shuffled through a custom data loader.
+For each profile the data set is modified: to each row the lagged features are concatenated, the number of lags to keep can be changed, after this procedure the rows of all the profiles are united and shuffled through a custom data loader.
 
 \section{The Methodological Approach}
 Different \textit{Deep Learning} architectures are tried in order to compare them and choose the most suitable model to the problem: each model built using \mintinline{python}|pytorch| and optimized with an Auto-ML algorithm using \mintinline{python}|sherpa| optimization library.
 In particular the \textit{Gaussian Process} (GP) surrogate model is used with the \textit{Expected Improvement} (EI) acquisition function to have a better exploration during the optimization.
 
-Each model is optimized using standard \textit{Mean Squared Error} (MSE) in a first trial and than re-optimized using a custom weighted-version that assigns a triple importance to temperatures that surpass the value of the median (computed on the train set).
+Each model is optimized using Adam optimizer and a standard \textit{Mean Squared Error} (MSE) as the loss function in a first trial and then re-optimized using a custom weighted-version that assigns a triple importance to temperatures that surpass the value of the median (computed on the train set).
 %??? aah sì, io avevo messo a caso 0.5 che è il valore medio del range ahahahaha
 
 \subsection{Models}
@@ -170,30 +170,30 @@ Which layer (the previous input, the estimated output or the embedding) the RNN 
 
 \paragraph{LSTM and GRU}
 Two more type of recursive neural architecture are tested, the first one uses a LSTM layer while the other uses a GRU layer instead.
-In this case two independent models are created: one to predict only the \verb|pm| variable and one to predict the 3 \verb|stator| variables.
+For the first task two independent models are created: one to predict only the \verb|pm| variable and one to predict the 3 \verb|stator| variables and the window is fixed to 60 lags, it does not need to be optimized since the LSTM and GRU should automatically understand how many lags are important.
 
-In this case, for the first task, the window is fixed to 60 lags and it does not need to be optimized, since the LSTM and GRU should automatically understand how many lags are important.
 The model is pretty simple (as required by the task): it has one recursive layer (either LSTM or GRU) followed by two fully connected layer, the second fully connected layer can be omitted if the number of neurons are 0, lastly there is the output layer which has one neuron while predicting \verb|pm| and three neurons while predicting \verb|stator|.
+During the second task all the four targets are predicted together.
 
-The hyperparameter optimizer need to optimize the number of hidden units, the number of neurons for each fully connected layer, the learning rate and the batch size of the data.
-The objective score is MSE and it is calculated, after one epoch of the training set, on the validation set.
+The hyperparameter optimizer needs to optimize the number of hidden units, the number of neurons for each fully connected layer, the learning rate and the batch size of the data.
+The objective score is the MSE and it is calculated, after one epoch of the training set, on the validation set.
 
 \paragraph{CNN}
 %roby explain your convolution idea! of course i do. fell free to add or modify :)
-A CNN model is also tested, even though the number of parameters are increased compared to the other approach described before.
+A CNN model is also tested, even though the number of parameters increases compared to the other approach described before.
 
 For the first task, the model has 2 Convolutional layer each one followed by a Max Pooling layer, the last convolution-pooling block is flattenized and followed by 2 Fully Connected layer and the output layer.
 The second Convolutional and Fully Connected layers can be omitted if the number of filters or neurons are 0.\\ 
-The input data are the vectors that contain all the variables for each time from $t_{current-1}$ to $t_{current-lag}$, where $t_{current}$ is the time that needs to be predicted and lag is the temporal window that the model can see.
-Basically this model is a lighter version of FC models (it has less number of weights) and it extracts the most relevant features to pass to the FC layers.
-The convolutions window is the same used by the LSTM model and is left to the model understand which lags are important.
+The convolution happens on the vectors that contain all the variables for each specific time in $[t_{current-lag},t_{current-1}]$, where $t_{current}$ is the time at which the target needs to be predicted and lag is the temporal window that the model can see.
+Basically this model is a lighter version of a FC model (it has less number of weights) and it extracts the most relevant features to pass to the FC layers.
+The temporal window is the same used by the LSTM model.
 
 In this architecture the hyperparameters to optimize are the stride and kernel of the convolutions, the number of neurons for each FC layer, the learning rate and the batch size.
 
 For the second task the architecture is simplified: the poolings are removed.
 
-\paragraph{Expected performance} The recursive models, since they projected for this king of data, are expected to work well, but reading enough literature\cite{cnn_time}, it can be deduced that the CNN should also work well, so this could be a good moment to confirm if there performance are at least comparable to the recursive models.
-It cannot be a proof of them working better or worse, in this case, since no NAS is done for either model, just hyper parameter optimization with a simple pseudo NAS, where the number of layers can vary.
+\paragraph{Expected performance} The recursive models, since they are used for this king of data/objective, are expected to work well, but reading enough literature\cite{cnn_time}\cite{cnn_time_2}, it can be deduced that the CNN should also work well, so this could be a good moment to confirm if there performance are at least comparable to the recursive models.
+This report cannot be a proof of them working better or worse because NAS was not done for either model, only the hyper parameter were optimized with a simple pseudo NAS, where the number of layers can vary in some cases.
 
 \subsection{Dataloaders}
 To avoid giving all input and output matrix to the model (which has a side-effect: it fills both RAM and GPU memory and crashes everything), two ad-hoc dataloaders are programmed to optimize the learning process.
@@ -253,7 +253,7 @@ For the secondary task (predicting motor temperature without knowing previous va
 
 % The references section should contain complete citations following standard form.  The references should be numbered and listed in the order they were cited in the body of the report. In the text of the report, a particular reference can be cited by using a numerical number in brackets as \cite{Lee2015} that corresponds to its number in the reference list. \LaTeX provides several styles to format the references
 
-\bibliographystyle{ieeetran}
+\bibliographystyle{IEEEtran}
 \nocite{*}
 \bibliography{references}
 
