@@ -39,6 +39,7 @@
 \usepackage{hyperref}
 \usepackage{enumitem}
 \usepackage{minted}
+\usepackage{cite}
 \usepackage[colorinlistoftodos]{todonotes}
 
 \begin{document}
@@ -71,7 +72,7 @@
 
 \large
 \emph{Authors:}\\
-Federico Moiraghi - 799735 - f.moiraghimotta@campus.unimib.it \\
+Federico Moiraghi -$799735$- f.moiraghimotta@campus.unimib.it \\
 Pranav Kasela - 846965 - p.kasela@campus.unimib.it \\
 Roberto Berlucchi - 847939 - r.berlucchi@campus.unimib.it \\
 [0.5cm] % Your name
@@ -154,7 +155,8 @@ For each profile the data set is modified: to each row the lagged features is co
 Different \textit{Deep Learning} architectures are tried in order to compare them and choose the most suitable model to the problem: each model built using \mintinline{python}|pytorch| and optimized with an Auto-ML algorithm using \mintinline{python}|sherpa| optimization library.
 In particular the \textit{Gaussian Process} (GP) surrogate model is used with the \textit{Expected Improvement} (EI) acquisition function to have a better exploration during the optimization.
 
-Each model is optimized using standard \textit{Mean Squared Error} (MSE) in a first trial and than re-optimized using a custom weighted-version that assigns a triple importance to temperatures that reach the value of the median (computed on the train set).
+Each model is optimized using standard \textit{Mean Squared Error} (MSE) in a first trial and than re-optimized using a custom weighted-version that assigns a triple importance to temperatures that surpass the value of the median (computed on the train set).
+%??? aah sì, io avevo messo a caso 0.5 che è il valore medio del range ahahahaha
 
 \subsection{Models}
 All models are implemented as Sequence to Value (Seq2Val) so that the training process can be paralleled and shuffled, with improvements in both speed and quality.
@@ -162,44 +164,48 @@ In addition, a Sequence to Value model can be easily rewritten as Sequence to Se
 
 \paragraph{RNN}
 In order to accomplish both tasks with a lightweight model easily usable by a car, a simple Recurrent Neural Network is implemented: this model is provided with one hidden layer that depends on both current data and previous observations, and uses it to estimate the target variables.
-After the hidden layer, data flows through two independent feed-forward neural networks (with two layers both) to estimate values for \verb|pm| and \verb|stator|s variables: this approach is justified by the higher correlation between \verb|stator| temperatures and lower correlation with \verb|pm|.
+After the hidden layer, data flows through two independent feed-forward neural networks (with two layers both) to estimate values for \verb|pm| and \verb|stator| variables: this approach is justified by the higher correlation between \verb|stator| temperatures and lower correlation with \verb|pm|.
 
 Which layer (the previous input, the estimated output or the embedding) the RNN yields to the next step and how to use this information (where it is linked) are parameters settable in the model construction and optimized through Auto-ML; in addition, \textit{learning rate}, number of neurons per hidden layer, and length of the input sequence are optimized in the same way: to do so, the \mintinline{python}|Custom_RNN.forward()| method is implemented recursively to make it as adaptable as possible.
 
 \paragraph{LSTM and GRU}
 Two more type of recursive neural architecture are tested, the first one uses a LSTM layer while the other uses a GRU layer instead.
-In this case two independent models are created: one to predict only the \verb|pm| variable and one to predict the 3 \verb|stator|s variables.
+In this case two independent models are created: one to predict only the \verb|pm| variable and one to predict the 3 \verb|stator| variables.
 
-In this case the window is fixed to 60 lags and it does not need to be optimized, since the LSTM and GRU should automatically understand how many lags are important.
-The model is pretty simple (as required by the task): it has one recursive layer (either LSTM or GRU) followed by two fully connected layer, the second fully connected layer can be omitted if the number of neurons are 0, lastly there is the output layer which has one neuron while predicting \verb|pm| and three neurons while predicting \verb|stator|s.
+In this case, for the first task, the window is fixed to 60 lags and it does not need to be optimized, since the LSTM and GRU should automatically understand how many lags are important.
+The model is pretty simple (as required by the task): it has one recursive layer (either LSTM or GRU) followed by two fully connected layer, the second fully connected layer can be omitted if the number of neurons are 0, lastly there is the output layer which has one neuron while predicting \verb|pm| and three neurons while predicting \verb|stator|.
 
 The hyperparameter optimizer need to optimize the number of hidden units, the number of neurons for each fully connected layer, the learning rate and the batch size of the data.
 The objective score is MSE and it is calculated, after one epoch of the training set, on the validation set.
 
 \paragraph{CNN}
 %roby explain your convolution idea! of course i do. fell free to add or modify :)
-Is tested also a CNN model, even if the space required is sensitivly larger than the other approach described before.
+A CNN model is also tested, even though the number of parameters are increased compared to the other approach described before.
 
-The model has 2 Convolutional layer followed each one by a Max Pooling layer and then 3 Fully Connected layer. The second Convolutional and Fully Connected layers can be omitted if the number of filters or neurons are 0.\\ 
-The input data are the vectors that contain all the variables of a certain time and you go from t to t minus the lenght of the lag. The convolutions window is the same used by the LSTM model and is left to the model understand which lags are important.
+For the first task, the model has 2 Convolutional layer each one followed by a Max Pooling layer, the last convolution-pooling block is flattenized and followed by 2 Fully Connected layer and the output layer.
+The second Convolutional and Fully Connected layers can be omitted if the number of filters or neurons are 0.\\ 
+The input data are the vectors that contain all the variables for each time from $t_{current-1}$ to $t_{current-lag}$, where $t_{current}$ is the time that needs to be predicted and lag is the temporal window that the model can see.
+Basically this model is a lighter version of FC models (it has less number of weights) and it extracts the most relevant features to pass to the FC layers.
+The convolutions window is the same used by the LSTM model and is left to the model understand which lags are important.
 
 In this architecture the hyperparameters to optimize are the stride and kernel of the convolutions, the number of neurons for each FC layer, the learning rate and the batch size.
 
+For the second task the architecture is simplified: the poolings are removed.
+
+\paragraph{Expected performance} The recursive models, since they projected for this king of data, are expected to work well, but reading enough literature\cite{cnn_time}, it can be deduced that the CNN should also work well, so this could be a good moment to confirm if there performance are at least comparable to the recursive models.
+It cannot be a proof of them working better or worse, in this case, since no NAS is done for either model, just hyper parameter optimization with a simple pseudo NAS, where the number of layers can vary.
+
 \subsection{Dataloaders}
-To avoid giving all input and output matrix to the model, two ad-hoc dataloaders are programmed to optimize the learning process.
-Belonging to various independent series, data is represented internally as a sequence of tuples $<id_{serie}, id_{observation}>$ so that can be easily shuffled and yielded to the model (without side-effects) using an arbitrary large batch size.
+To avoid giving all input and output matrix to the model (which has a side-effect: it fills both RAM and GPU memory and crashes everything), two ad-hoc dataloaders are programmed to optimize the learning process.
+Belonging to various independent series, data is represented internally as a sequence of tuples $<\text{id}_{serie}, \text{id}_{observation}>$ so that can be easily shuffled and yielded to the model (without side-effects) using an arbitrary large batch size.
 
 \paragraph{First Task}
-To accomplish the first task, data in given to the algorithm so that input matrix contains all values of all features and target variables throw the temporal window (starting from an arbitrary moment in the past $t_{-max}$ to the previous observation $t_{-1}$), while target vector contains following values of only target variables at time $t_0$.
+To accomplish the first task, data is given to the algorithm so that input matrix contains all values of all features and target variables throw the temporal window (starting from an arbitrary moment in the past $t_{-max}$ (the maximum lag) to the previous observation $t_{-1}$), while target vector contains following values of only target variables at time $t_0$.
 
 \paragraph{Second Task}
-For the second task instead, dataloaders yield a input matrix containing only features values for a window time starting in a moment $t_{max}$ to $t_0$; in addition a vector of values of target variables at time $t_0$ is given as ground truth.
+For the second task instead, dataloaders yield a input matrix containing only features values for a window time starting in a moment $t_{max}$ to $t_0$; in addition a vector of values of target variables at time $t_0$ is given as ground truth, so it's a real time prediction of the target and in this case there is a unique model which predicts all four targets.
+
 % This is the central and most important section of the report. Its objective must be to show, with linearity and clarity, the steps that have led to the definition of a decision model. The description of the working hypotheses, confirmed or denied, can be found in this section together with the description of the subsequent refining processes of the models. Comparisons between different models (e.g. heuristics vs. optimal models) in terms of quality of solutions, their explainability and execution times are welcome. 
-
-%inifinitive generator!?
-% You should also mention any unforeseen problems you encountered when implementing the system and how and to what extent you overcame them. Common problems are:  difficulties involving existing software.
-
-
 \section{Results and Evaluation}
  
 \subsection{First Task}
@@ -247,7 +253,8 @@ For the secondary task (predicting motor temperature without knowing previous va
 
 % The references section should contain complete citations following standard form.  The references should be numbered and listed in the order they were cited in the body of the report. In the text of the report, a particular reference can be cited by using a numerical number in brackets as \cite{Lee2015} that corresponds to its number in the reference list. \LaTeX provides several styles to format the references
 
-\bibliographystyle{IEEEtran}
-% \bibliography{references.bib}
+\bibliographystyle{ieeetran}
+\nocite{*}
+\bibliography{references}
 
 \end{document}
