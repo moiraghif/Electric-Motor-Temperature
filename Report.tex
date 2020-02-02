@@ -40,6 +40,7 @@
 \usepackage{enumitem}
 \usepackage{minted}
 \usepackage{cite}
+\usepackage{multirow}
 \usepackage[colorinlistoftodos]{todonotes}
 
 \begin{document}
@@ -206,50 +207,127 @@ In this architecture the hyperparameters to optimize are the stride and kernel o
 \section{Results and Evaluation}
  
 \subsection{First Task}
-As shown in figure \ref{fig:automl_mse}, after the optimization process LSTM and GRU yield similar results (having a similar structure), while CNN provides results comparable with the previous architecture.
-RNN however yields poor previsions, due to its simplicity, compared to other architectures.
+In the Figure \ref{fig:automl_mse} the result of hyper-parameter optimization are shown, for both models one predicting the \verb|pm| variable and the other predicting the three \verb|stator| variables, the RNN is excluded because of it's poor performance when compared to the other three models.
+
+The results of the model on Training, Validation and Test are reported on the Table \ref{tab:first}, in this case all the output variables are concatenated together and a general loss is calculated.
+\begin{table}[!h]
+  \centering
+  \begin{tabular}{|l|c|c|c|c|c|c|}
+    \hline
+    & \multicolumn{3}{|c|}{MSE} & \multicolumn{3}{|c|}{Weighted MSE} \\
+    \hline
+    Models & Train & Validation & Test & Train & Validation & Test \\
+    \hline
+    RNN & & & & & & \\
+    CNN & 2.32e-5 & 2.28e-5  & 2.39e-5 & & & \\
+    GRU & 1.29e-5 & 1.24e-5 & 1.28e-5 & & &\\
+    LSTM & 0.98e-5 & 0.96e-5 & 1.0e-5 & & & \\
+    \hline
+  \end{tabular}
+  \caption{Results on Training, Validation and Test Set for the first task.}
+  \label{tab:first}
+\end{table}
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE.png}
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_stator.png}
-    \caption{Results of the optimization process on the pm and the three stator variables respectively using the MSE (RNN is excluded due to its poor performance)}
+    \caption{Results of the optimization process on the pm and the three stator variables respectively using the MSE for the first task (RNN is excluded due to its poor performance)}
     \label{fig:automl_mse}
-\end{figure}\\
-
-In addition, to improve predictions of critical temperatures it is used a weighted version of MSE (where weights depend on the target value): unitary weight is used for values under 0.5 and a weight of 3 is used for values over 0.5.
-Results of hyperparameter optimization are shown in the figure \ref{fig:automl_custom}.
+\end{figure}
+  
+In addition, to improve predictions of critical temperatures a custom weighted version of MSE is used as described in the previous section.
+Results of hyperparameter optimization with the new loss are shown in the Figure \ref{fig:automl_custom}.\\
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_new_loss.png}
-    \caption{Results of the optimization process using a custom loss (RNN is excluded due to its poor performance)}
+    \caption{Results of the optimization process using a custom loss for the first task (RNN is excluded due to its poor performance)}
     \label{fig:automl_custom}
-\end{figure}\\
+\end{figure}
 
-However, comparing results using only the loss value is not satisfying for the task: the model have to be light enough to be easily used by a car. So architectures are plotted considering both number of parameters and performance.
-% TODO: performance ~ numero di parametri
+%%NEED TO CREATE A  TABLE WITH THE TRAINING VALIDATION AND TEST RESULTS WITH BOTH LOSSES (ON THE SAME TABLE TO USE LESS SPACE).
+
 
 \subsection{Second Task}
-For the secondary task (predicting motor temperature without knowing previous values) results of hyperparameters optimization are the following:
+For the secondary task (predicting motor temperature without knowing previous values) results of hyperparameters optimization are shown in the figure \ref{fig:second_task}:
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_second.png}
-    \caption{Result of the optimization for the second task}
+    \caption{Result of the hyper-parameter optimization for the second task}
     \label{fig:second_task}
-\end{figure}  
+\end{figure}
+  
 % The Results section is dedicated to presenting the actual results (i.e. measured and calculated quantities), not to discussing their meaning or interpretation. The results should be summarized using appropriate Tables and Figures (graphs or schematics). Every Figure and Table should have a legend that describes concisely what is contained or shown. Figure legends go below the figure, table legends above the table. Throughout the report, but especially in this section, pay attention to reporting numbers with an appropriate number of significant figures. 
 
 \section{Discussion}
+As shown in Figure \ref{fig:automl_mse} and Figure \ref{fig:automl_custom}, after the optimization process, the LSTM and GRU yield the best results (LSTM is slightly better), and CNN provides results comparable with these architecture.
+RNN however yields poor previsions when compared to the other architectures.
+
+However, comparing results using only the loss value is not satisfying for the following task: the model have to be light enough to be easily used by a car. So both number of parameters and performance are considered and plotted in the Figure \ref{fig:banana}. %fede dovrà scegliere nome decente
+
+% TODO: performance ~ numero di parametri
+% HERE IS FEDE GRAPH
+
+In the second task the performance are pretty good for the \verb|stator| variables but not so good for the \verb|pm| variable.
+The best model in this task is again the LSTM.
+The RNN's behavior is improved too.
+In the prediction of the LSTM model on the test set (Figure \ref{fig:lstm_second}) a lot of noise can be noted in the prediction of the \verb|pm| variable.
+The \verb|stator| variable prediction seems to follow the local trend pretty well, especially, in a case where there is no direct formula connecting different physical quantities.
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=\linewidth, height=4cm]{imgs/lstm_pred_second.png}
+    \caption{Prediction of the LSTM model in the second task}
+    \label{fig:lstm_second}
+\end{figure}
+
+
+The weighted loss has been applied also in this case (with the CNN model), it improves, as expected, the prediction for higher temperature as shown in Figure \ref{fig:cnn_second}, the prediction for lower and mid range temperature is more noisy, thus the overall MSE decreases.
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=\linewidth, height=4cm]{imgs/pred_second_custom_loss.png}
+    \caption{Prediction of the CNN model in the second task with the custom loss.}
+    \label{fig:cnn_second}
+\end{figure}
+
+Even creating a separate independent model for the \verb|pm| variable doesn't improve it's performance.
 % The discussion section aims at interpreting the results in light of the project's objectives. The most important goal of this section is to interpret the results so that the reader is informed of the insight or answers that the results provide. This section should also present an evaluation of the particular approach taken by the group. For example: Based on the results, how could the experimental procedure be improved? What additional, future work may be warranted? What recommendations can be drawn?
 
 
 \section{Conclusions}
-
-\paragraph{Expected performance} The recursive models, since they are used for this king of data/objective, are expected to work well, but reading enough literature\cite{cnn_time}\cite{cnn_time_2}, it can be deduced that the CNN should also work well, so this could be a good moment to confirm if there performance are at least comparable to the recursive models.
+% BANANA STUFF,  IT'S AN ACTUAL BANANA!!
+%                  \                                 (@@@@)
+%                   \                               (@@@@@@)
+%                    \                              (@@@@@@)
+%                     \                              @@@@@@  
+%                      \                             @@@@@   
+%                       ------                      @@@@@@   
+%                             \                    @@@@@@@@  
+%                              \                  @@@@@@@@@@ 
+%                               \               @@@@@@@@@@@@@
+%                                --->          @@@@@@@@@@@@@@
+%                                           @@@@@@@@@@@@@@@@@
+%                                         @@@@@@@@@@@@@@@@@@@
+%                                      @@@@@@@@@@@@@@@@@@@@@ 
+%                                   @@@@@@@@@@@@@@@@@@@@@@@  
+%                                @@@@@@@@@@@@@@@@@@@@@@@@@   
+%                          @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    
+%          @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@      
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@        
+% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@           
+%   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@              
+%       @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@                  
+%               @@@@@@@@@@@@@@@@@@@@                        
+The recursive models, since they are used for this king of data/objective, are expected to work well, but reading enough literature\cite{cnn_time}\cite{cnn_time_2}, it can be deduced that the CNN should also work well, this was a confirmation of this fact: there performance are at least comparable to the recursive models.
 This report cannot be a proof of them working better or worse because NAS was not done for either model, only the hyper parameter were optimized with a simple pseudo NAS, where the number of layers can vary in some cases.
+
+The target variables have a normal distribution when collected from different independent profiles, but in each profile the distribution is not normal, thus the optimal predictor for  a series might not be linear and the arima ACF/PACF plot has different ARIMA coefficients and components so for each series a new ARIMA needs to be trained making it unpractical to use, but the deep learning model generalizes well on the test set, if the model needs to be simplified even more, a great option could be an exponential smoothing model for the first task and a generalized linear regression for the second task given the high correlation among some of the variables or a combination of both.
+
+To improve the second task models, recursive models can be used in a different way: after the prefixed lag number of event have taken place, the predicted values of past can be used with the model created in the first task to `smoothen' the model's prediction. 
 
 % Conclusions should summarize the central points made in the Discussion section, reinforcing for the reader the value and implications of the work. If the results were not definitive, specific future work that may be needed can be (briefly) described. The conclusions should never contain ``surprises''. Therefore, any conclusions should be based on observations and data already discussed. It is considered extremely bad form to introduce new data in the conclusions.
 
-\section*{References}
+%\section*{References}
 
 % The references section should contain complete citations following standard form.  The references should be numbered and listed in the order they were cited in the body of the report. In the text of the report, a particular reference can be cited by using a numerical number in brackets as \cite{Lee2015} that corresponds to its number in the reference list. \LaTeX provides several styles to format the references
 
