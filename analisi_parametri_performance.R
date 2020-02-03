@@ -29,8 +29,8 @@ plot_comparison <- function(data, loss.name, task) {
     scale_x_log10() +
     scale_y_log10() +
     geom_point(size = 5) +
-    xlab("Parameters of the model (log scale)") +
-    ylab(paste(loss.name, "(log scale)")) +
+    xlab("Parameters of the model") +
+    ylab(loss.name) +
     scale_fill_manual(values = c("rnn" = "#009E73",
                                  "lstm" = "#D55E00",
                                  "gru" = "#E69F00",
@@ -62,7 +62,7 @@ tibble(
                5650,     # GRU (ok)
                11936,    # LSTM (ok)
                3190)) %>%  # RNN (ok)
-    plot_comparison("Custom Loss", 1)
+    plot_comparison("Weighted MSE", 1)
 
 ## Second Task, MSE
 tibble(
@@ -82,4 +82,4 @@ tibble(
              0.02543090402930924),  # RNN (ok)
     params = c(1872,   # CNN
                2274)) %>%  # RNN (ok)
-    plot_comparison("Custom Loss", 2)
+    plot_comparison("Weighted MSE", 2)
