@@ -206,16 +206,16 @@ In the Figure \ref{fig:automl_mse} the result of hyper-parameter optimization ar
 The results of the model on Training, Validation and Test are reported on the Table \ref{tab:first}, in this case all the output variables are concatenated together and a general loss is calculated.
 \begin{table}[!h]
   \centering
-  \begin{tabular}{|l|c|c|c|}
+  \begin{tabular}{|l|c|c|c|c|c|c|}
     \hline
-    & \multicolumn{3}{|c|}{MSE} \\
+    & \multicolumn{3}{|c|}{MSE} & \multicolumn{3}{|c|}{Weighted MSE} \\
     \hline
-    Models & Train & Validation & Test \\
+    Models & Train & Validation & Test & Train & Validation & Test \\
     \hline
-    RNN & & & \\
-    CNN & 2.32e-5 & 2.28e-5  & 2.39e-5 \\
-    GRU & 1.29e-5 & 1.24e-5 & 1.28e-5 \\
-    LSTM & 0.98e-5 & 0.96e-5 & 1.00e-5 \\
+    RNN & & & & & &\\
+    CNN & 2.32e-5 & 2.28e-5  & 2.39e-5 &1.78e-5 &1.8e-5 &1.98e-5\\
+    GRU & 1.29e-5 & 1.24e-5 & 1.28e-5 & 2.42e-5& 2.18e-5 & 2.48e-5\\
+    LSTM & 0.98e-5 & 0.96e-5 & 1.00e-5 & 2.2e-5& 2e-5& 2.23e-5\\
     \hline
   \end{tabular}
   \caption{Results on Training, Validation and Test Set for the first task.}
@@ -225,7 +225,7 @@ The results of the model on Training, Validation and Test are reported on the Ta
     \centering
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE.png}
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_stator.png}
-    \caption{Results of the optimization process on the pm and the three stator variables respectively using the MSE for the first task (RNN is excluded due to its poor performance)}
+    \caption{Results of the optimization process on the pm and the three stator variables respectively using the MSE for the first task (RNN is excluded due to its poor performance). Values outside the specific range are excluded.}
     \label{fig:automl_mse}
 \end{figure}
   
@@ -233,7 +233,7 @@ In addition, to improve predictions of critical temperatures, a custom weighted 
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_new_loss.png}
-    \caption{Results of the optimization process using a custom loss for the first task (RNN is excluded due to its poor performance)}
+    \caption{Results of the optimization process using a custom loss for the first task (RNN is excluded due to its poor performance). Values outside the specific range are excluded.}
     \label{fig:automl_custom}
 \end{figure}
 
@@ -245,7 +245,7 @@ For the secondary task (predicting motor temperature without knowing previous va
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_second.png}
-    \caption{Result of the hyper-parameter optimization for the second task}
+    \caption{Result of the hyper-parameter optimization for the second task. Values outside the specific range are excluded.}
     \label{fig:second_task}
 \end{figure}
   
@@ -262,7 +262,7 @@ However, comparing results using only the loss value is not satisfying for the f
 
 In the second task the performance are pretty good for the \verb|stator| variables, but not so good for the \verb|pm| variable. The best model in this task is again the LSTM. The RNN's behavior is improved too.\\
 In the prediction of the LSTM model on the test set (Figure \ref{fig:lstm_second}) a lot of noise can be noted in the prediction of the \verb|pm| variable.
-The \verb|stator| variable prediction seems to follow the local trend pretty well, especially, in a case where there is no direct formula connecting different physical quantities.
+The \verb|stator| variable prediction seems to follow the local trend pretty well, especially, when there is no direct formula connecting different physical quantities.
 
 \begin{figure}[!h]
     \centering
@@ -282,6 +282,8 @@ The weighted loss has been applied also in this case (with the CNN model) and it
 \end{figure}
 
 Even creating a separate independent model for the \verb|pm| variable doesn't improve it's performance.
+Obtaining real data from actual cars might be useful to improve the model further.
+All the data is produced in laboratory and addition of white noise, and the AC current and voltage of the 3 phase reference system is considered balanced, but all real systems have some irregularities, so a dq0 transformation is just a simplification of the problem.
 
 % The discussion section aims at interpreting the results in light of the project's objectives. The most important goal of this section is to interpret the results so that the reader is informed of the insight or answers that the results provide. This section should also present an evaluation of the particular approach taken by the group. For example: Based on the results, how could the experimental procedure be improved? What additional, future work may be warranted? What recommendations can be drawn?
 
@@ -313,9 +315,9 @@ Even creating a separate independent model for the \verb|pm| variable doesn't im
 The recursive models, since they are used for this king of data/objective, are expected to work well, but reading enough literature\cite{cnn_time}\cite{cnn_time_2}, it can be deduced that the CNN should also work well. This work was a confirmation of this fact: there performance are at least comparable to the recursive models. \\
 This report, however, cannot be a proof of them working better or worse because NAS was not done for either model, only the hyper parameter were optimized with a simple pseudo NAS where the number of layers can vary in some cases.
 
-The target variables have a normal distribution when collected from different independent profiles, but in each profile the distribution is not normal, thus the optimal predictor for a series might not be linear and the arima ACF/PACF plot has different ARIMA coefficients and components so for each series a new ARIMA needs to be trained making it unpractical to use, but the deep learning model generalizes well on the test set. If the model needs to be simplified even more, a great option could be an exponential smoothing model for the first task and a generalized linear regression for the second task given the high correlation among some of the variables or a combination of both.
+The target variables have a normal distribution when collected from different independent profiles, but in each profile the distribution is not normal, thus the optimal predictor for a series might not be linear and the arima ACF/PACF plot has different ARIMA coefficients and components, so, for each series a new ARIMA needs to be trained making it unpractical to use, but the deep learning model generalizes well. If the model needs to be simplified even more, a great option would be an exponential smoothing model for the first task and a generalized linear regression for the second task given the high correlation among some of the variables or even combining both models in a single one.
 
-To improve the second task models, recursive models can be used in a different way: after the prefixed lag number of event have taken place, the predicted values of past can be used with the model created in the first task to `smoothen' the model's prediction. 
+To improve the second task's performance, recursive models can be used in a different way: after the prefixed lag number of event have taken place, the predicted values of past can be used with the model created in the first task to `smoothen' the model's prediction.
 
 % Conclusions should summarize the central points made in the Discussion section, reinforcing for the reader the value and implications of the work. If the results were not definitive, specific future work that may be needed can be (briefly) described. The conclusions should never contain ``surprises''. Therefore, any conclusions should be based on observations and data already discussed. It is considered extremely bad form to introduce new data in the conclusions.
 
