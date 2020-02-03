@@ -109,7 +109,7 @@ Roberto Berlucchi - 847939 - r.berlucchi@campus.unimib.it \\
 \section{Introduction}
 The data set comprises several sensor data collected from a permanent magnet synchronous motor (PMSM) deployed on a test bench. The PMSM represents a German OEM's prototype model and test bench measurements were collected by the LEA department at Paderborn University.
 
-Recordings are sampled at a frequency of $2Hz$ and are divided in various profiles, with a total of $998070$ observations. Each profile indicates a different test session, that last from one to six hours.
+Recordings are sampled at a frequency of $2Hz$ and are divided in various profiles, with a total of $998070$ observations. Each profile indicates a different test session, that can last from one to six hours.
 
 Input variables are:
 \begin{itemize}[topsep=0ex, noitemsep]
@@ -180,7 +180,7 @@ Which layer (the previous input, the estimated output or the embedding) the RNN 
 
 \paragraph{LSTM and GRU}
 Two more type of recursive neural architecture are tested, the first one uses a LSTM layer while the other uses a GRU layer instead.
-For the first task two independent models are created: one to predict only the \verb|pm| variable and one to predict the 3 \verb|stator| variables; time window size is fixed to 60 lags: it does not need to be optimized since the LSTM and GRU should automatically ``understand'' how many lags are important.
+For the first task two independent models are created: one to predict only the \verb|pm| variable and one to predict the 3 \verb|stator| variables; time window size is fixed to 60 lags and 20 lags for the second task: it does not need to be optimized since the LSTM and GRU should automatically ``understand'' how many lags are important.
 
 The model is pretty simple (as required by the task): it has one recurrent layer (either LSTM or GRU) followed by two fully connected layers, of which the second one can be omitted if the number of neurons is 0; lastly there is the output layer which has one neuron while predicting \verb|pm| and three neurons while predicting \verb|stator|.
 During the second task all the four targets are predicted together.
@@ -222,7 +222,7 @@ Results of the model on Training, Validation and Test are reported on the Table 
     LSTM   & 0.98e-5 & 0.96e-5    & 1.00e-5 & 2.20e-5 & 2.00e-5    & 2.23e-5\\
     \hline
   \end{tabular}
-  \caption{Results on Training, Validation and Test Set for the first task. Values can change (in a small range) due to stochasticity of algorithms.}
+  \caption{Results on Training, Validation and Test Set for the first task. Values can change due to stochasticity of algorithms.}
   \label{tab:first}
 \end{table}
 \begin{figure}[!h]
@@ -259,8 +259,8 @@ For the secondary task (predicting motor temperature without knowing previous va
     LSTM  & 0.0143 & 0.0139     & 0.0149 & NA     & NA         & NA\\
     \hline
   \end{tabular}
-  \caption{Results on Training, Validation and Test Set for the second task. Values can change (in a small range) due to stochasticity of algorithms.}
-  \label{tab:first}
+  \caption{Results on Training, Validation and Test Set for the second task. Values can change due to stochasticity of algorithms.}
+  \label{tab:second}
 \end{table}
 
 \begin{figure}[!h]
@@ -273,7 +273,8 @@ For the secondary task (predicting motor temperature without knowing previous va
 % The Results section is dedicated to presenting the actual results (i.e. measured and calculated quantities), not to discussing their meaning or interpretation. The results should be summarized using appropriate Tables and Figures (graphs or schematics). Every Figure and Table should have a legend that describes concisely what is contained or shown. Figure legends go below the figure, table legends above the table. Throughout the report, but especially in this section, pay attention to reporting numbers with an appropriate number of significant figures. 
 
 \section{Discussion}
-As shown in Figure \ref{fig:automl_mse} and Figure \ref{fig:automl_custom}, after the optimization process, the LSTM and GRU yield the best results (LSTM is slightly better); CNN provides results comparable with these architecture, while RNN yields poor previsions when compared to the other architectures.
+As shown in Table \ref{tab:first} and Table \ref{tab:second}, after the optimization process, the LSTM yields the best results for the first task and the CNN provides the best results for the second task on the test set, when using the MSE loss.
+The RNN yields poor previsions when compared to the other architectures.
 
 However, comparing results using only the loss value is not satisfying, because the model have to be light enough to be easily used by a car. So both number of parameters and performance are considered and plotted in the Figure
 \begin{figure}[!h]
@@ -287,9 +288,9 @@ However, comparing results using only the loss value is not satisfying, because 
 \end{figure}
   
 As shown in Figure \ref{fig:banana}, numbers of parameters is one order of magnitude higher using the better architecture in the first task (CNN) instead of GRU, with little impact on prediction quality.
-In the second task however, the most-accurate model has the minor number of parameters, so its use is not discutible. \newline
+In the second task however, the most-accurate model has the minor number of parameters, so its use is not discutible.
 
-In the second task performances are pretty good for the \verb|stator| variables, but not so good for the \verb|pm| variable. The best model in this task is again the LSTM. The RNN's behavior is improved too.\\
+In the second task performances are pretty good for the \verb|stator| variables, but not so good for the \verb|pm| variable. The best model in this task is the CNN. The RNN's behavior is improved too.\\
 In the prediction of the LSTM model on the test set (Figure \ref{fig:lstm_second}) a lot of noise can be noted in the prediction of the \verb|pm| variable.
 The \verb|stator| variable prediction seems to follow the local trend pretty well, despite the fact that there is no direct formula connecting different physical quantities.
 
@@ -312,8 +313,7 @@ The weighted loss has been applied also in this case (with the CNN model) and it
 
 Even creating a separate independent model for the \verb|pm| variable does not improve its performance.
 Obtaining real data from actual cars might be useful to improve the model further: 
-% All the data is produced in laboratory and addition of white noise, and
-the AC current and voltage of the 3 phase reference system is supposed to be balanced, but all real systems have some irregularities, so a dq0 transformation is just a simplification of the problem.
+All the data is produced in laboratory with the addition of white noise, furthermore, the AC current and voltage of the 3 phase reference system is supposed to be balanced, but all real systems have some irregularities, so a dq0 transformation is just a simplification of the problem.
 
 % The discussion section aims at interpreting the results in light of the project's objectives. The most important goal of this section is to interpret the results so that the reader is informed of the insight or answers that the results provide. This section should also present an evaluation of the particular approach taken by the group. For example: Based on the results, how could the experimental procedure be improved? What additional, future work may be warranted? What recommendations can be drawn?
 
@@ -353,7 +353,7 @@ To improve the second task's performance, recurrent models can be used in a diff
 
 % Conclusions should summarize the central points made in the Discussion section, reinforcing for the reader the value and implications of the work. If the results were not definitive, specific future work that may be needed can be (briefly) described. The conclusions should never contain ``surprises''. Therefore, any conclusions should be based on observations and data already discussed. It is considered extremely bad form to introduce new data in the conclusions.
 
-\section*{References}
+%\section*{References}
 
 % The references section should contain complete citations following standard form.  The references should be numbered and listed in the order they were cited in the body of the report. In the text of the report, a particular reference can be cited by using a numerical number in brackets as \cite{Lee2015} that corresponds to its number in the reference list. \LaTeX provides several styles to format the references
 
