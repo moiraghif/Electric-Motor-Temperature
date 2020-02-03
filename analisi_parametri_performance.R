@@ -45,47 +45,41 @@ plot_comparison <- function(data, loss.name, task) {
 tibble(
     model = c("CNN", "GRU", "LSTM", "RNN"),
     loss = c(2.3870405136875294e-05,  # CNN (ok?)
-             get_min_list(c("GRU.csv", "GRU_stator.csv")),  # GRU
+             1.282211785752774e-05,  # GRU
              1.0090488300309295e-05,  # LSTM (ok?)
              0.004485802198374188),  # RNN (ok)
-    params = c(777613, 24519, 62882, 2485)) %>%  # (@Momo: ok)
+    params = c(820761, 54271, 133152, 2485)) %>%  # (@Momo: ok) needed to add the two models
     plot_comparison("MSE", 1)
 
 ## First Task, PK Loss
 tibble(
     model = c("CNN", "GRU", "LSTM", "RNN"),
-    loss = c(get_min_list(c("CNN_newLoss.csv")),  # CNN
-             get_min_list(c("GRU_new_loss.csv")),  # GRU
-             get_min_list(c("LSTM_new_loss.csv")),  # LSTM
+    loss = c(1.9762502941062025e-05,  # CNN
+             2.226042532008789e-05,  # GRU
+             2.4826416600684155e-05,  # LSTM
              0.002554067688305597),  # RNN (ok)
-    params = c(11840,    # CNN (ok)
-               7369,     # GRU (ok)
-               97249,    # LSTM (ok)
+    params = c(25162,    # CNN (ok)
+               5650,     # GRU (ok)
+               11936,    # LSTM (ok)
                3190)) %>%  # RNN (ok)
     plot_comparison("Custom Loss", 1)
 
 ## Second Task, MSE
 tibble(
-    model = c("CNN", "GRU", "LSTM", "RNN"),
-    loss = c(get_min_list(c("CNN.csv", "CNN_stator.csv")),  # CNN
-             get_min_list(c("GRU.csv", "GRU_stator.csv")),  # GRU
-             get_min_list(c("LSTM.csv", "LSTM_stator.csv")),  # LSTM
+    model = c("CNN", "LSTM", "RNN"),
+    loss = c(0.012622386947383202,  # CNN
+             0.0170904577741073,  # LSTM
              0.02316238535651421),  # RNN (ok)
-    params = c(777613,   # CNN (ok?)
-               24519,    # GRU (ok?)
-               62882,    # LSTM (ok?)
+    params = c(9470,   # CNN (ok?)
+               22192,    # LSTM (ok?)
                1740)) %>%  # RNN (ok)
     plot_comparison("MSE", 2)
 
 ## Second Task, PK Loss
 tibble(
-    model = c("CNN", "GRU", "LSTM", "RNN"),
-    loss = c(get_min_list(c("CNN.csv", "CNN_stator.csv")),  # CNN
-             get_min_list(c("GRU.csv", "GRU_stator.csv")),  # GRU
-             get_min_list(c("LSTM.csv", "LSTM_stator.csv")),  # LSTM
+    model = c("CNN", "RNN"),
+    loss = c(0.014130565648339465,  # CNN
              0.02543090402930924),  # RNN (ok)
-    params = c(777613,   # CNN
-               24519,    # GRU
-               62882,    # LSTM
+    params = c(1872,   # CNN
                2274)) %>%  # RNN (ok)
     plot_comparison("Custom Loss", 2)
