@@ -136,7 +136,8 @@ The data set can be found on Kaggle\footnote{\href{https://www.kaggle.com/wkirgs
     \includegraphics[width=\linewidth, height=10cm]{imgs/dist_plot.png}
     \caption{Distribution of the variables grouped by the division}
     \label{fig:dist_plot}
-\end{figure}\\
+\end{figure}
+
 The data set is divided into train, validation and test set: validation data consists of \verb|profile_id|s $20, 31, 46, 54, 62, 70, 79, 72$; the test set profiles are $35$ and $42$ and the training set consists of all the other profiles. Their relative distributions are plotted in the Figure \ref{fig:dist_plot}.
 
 Figure \ref{fig:corrplot} shows the correlation between the variables and it is seen that the target variables are highly correlated among themselves, in particular the \verb|stator|s variables.
@@ -145,9 +146,9 @@ Figure \ref{fig:corrplot} shows the correlation between the variables and it is 
     \includegraphics[width=\linewidth, height=7cm]{imgs/corrplot.png}
     \caption{Correlation Plot of the considered variables}
     \label{fig:corrplot}
-\end{figure}\\
+\end{figure}
 
-Data was already standardized by the provider (to anonymize data), but variables do not have a normal distribution, thus a further normalization between 0 and 1 (only on the training set) is applied.\\
+Data was already standardized by the provider (to anonymize data), but variables do not have a normal distribution, thus a further normalization between 0 and 1 (only on the training set) is applied.
 % @Momo: questo lo diciamo dopo (dataloaders), personalmente lo toglierei 
 % For each profile the data set is modified: to each row the lagged features are concatenated, the number of lags to keep can be changed, after this procedure the rows of all the profiles are united and shuffled through a custom data loader.
 
@@ -192,7 +193,7 @@ The objective score is the MSE and it is calculated, after one epoch of training
 %roby explain your convolution idea! of course i do. fell free to add or modify :)
 A CNN model is also tested, even though the number of parameters increases compared to the other approach described before.
 
-For the first task, the model has 2 Convolutional layers, each one followed by a Max Pooling layer; the last convolution-pooling block is flattenized and followed by 2 Fully Connected layer and then the output layer. The second Convolutional and Fully Connected layers can be omitted if the number of filters or neurons are 0. For the second task the architecture is simplified: poolings are removed and the temporal window is reduce (in the first task is the same used by the LSTM model).
+For the first task, the model has 2 Convolutional layers, each one followed by a Max Pooling layer; the last convolution-pooling block is flattenized and followed by 2 Fully Connected layer and then the output layer. The second Convolutional and Fully Connected layers can be omitted if the number of filters or neurons are 0. For the second task the architecture is simplified: poolings are removed and the temporal window is reduce (the same value used by the LSTM model).
  
 The convolution happens on the vectors that contain all the variables for each specific time in % $[t_{current-lag}, t_{current-1}]$, where $t_{current}$ is the time at which the target needs to be predicted and lag is the temporal window that the model can see.
 $[t_{-max}, t_{-1}]$.
@@ -211,15 +212,15 @@ In the Figure \ref{fig:automl_mse} results of hyper-parameter optimization are s
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_stator.png}
     \caption{Results of the optimization process on the pm and the three stator variables respectively using the MSE for the first task (RNN is excluded due to its poor performance). Values outside the specific range are excluded.}
     \label{fig:automl_mse}
-\end{figure}\\
+\end{figure}
  
-In addition, to improve predictions of critical temperatures, a custom weighted version of MSE is used as described in the previous section. Results of hyperparameter optimization with the new loss are shown in the Figure \ref{fig:automl_custom}.\\
+In addition, to improve predictions of critical temperatures, a custom weighted version of MSE is used as described in the previous section. Results of hyperparameter optimization with the new loss are shown in the Figure \ref{fig:automl_custom}.
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_new_loss.png}
     \caption{Results of the optimization process using a custom loss for the first task (RNN is excluded due to its poor performance). Values outside the specific range are excluded.}
     \label{fig:automl_custom}
-\end{figure}\\ %%NEED TO CREATE A  TABLE WITH THE TRAINING VALIDATION AND TEST RESULTS WITH BOTH LOSSES (ON THE SAME TABLE TO USE LESS SPACE).
+\end{figure} %%NEED TO CREATE A  TABLE WITH THE TRAINING VALIDATION AND TEST RESULTS WITH BOTH LOSSES (ON THE SAME TABLE TO USE LESS SPACE).
 
 Results of the model on Training, Validation and Test are reported on the Table \ref{tab:first}, in this case all the output variables are concatenated together and a general loss is calculated.
 \begin{table}[!h]
@@ -238,7 +239,7 @@ Results of the model on Training, Validation and Test are reported on the Table 
   \end{tabular}
   \caption{Results on Training, Validation and Test Set for the first task. Values can change due to stochasticity of algorithms.}
   \label{tab:first}
-\end{table}\\
+\end{table}
 
 \subsection{Second Task}
 For the secondary task (predicting motor temperature without knowing previous values) results of hyperparameters optimization are shown in the figure \ref{fig:second_task}:
@@ -247,7 +248,7 @@ For the secondary task (predicting motor temperature without knowing previous va
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_second.png}
     \caption{Result of the hyper-parameter optimization for the second task. Values outside the specific range are excluded.}
     \label{fig:second_task}
-\end{figure}\\
+\end{figure}
 
 In the Table \ref{tab:second} is shown the results of the models on Training, Validation and Test (the Weighted MSE has not been tested on the LSTM).
 \begin{table}[!h]
@@ -265,13 +266,31 @@ In the Table \ref{tab:second} is shown the results of the models on Training, Va
   \end{tabular}
   \caption{Results on Training, Validation and Test Set for the second task. Values can change due to stochasticity of algorithms.}
   \label{tab:second}
-\end{table}\\
+\end{table}
 
 % The Results section is dedicated to presenting the actual results (i.e. measured and calculated quantities), not to discussing their meaning or interpretation. The results should be summarized using appropriate Tables and Figures (graphs or schematics). Every Figure and Table should have a legend that describes concisely what is contained or shown. Figure legends go below the figure, table legends above the table. Throughout the report, but especially in this section, pay attention to reporting numbers with an appropriate number of significant figures. 
 
 \section{Discussion}
 As shown in Table \ref{tab:first} and Table \ref{tab:second}, after the optimization process, the LSTM yields the best results for the first task and the CNN provides the best results for the second task on the test set, when using the MSE loss.
 The RNN yields poor previsions when compared to the other architectures.
+
+In the second task performances are pretty good for the \verb|stator| variables, but not so good for the \verb|pm| variable. %The best model in this task is the CNN. The RNN's behavior is improved too.\\
+In the prediction of the LSTM model on the test set (Figure \ref{fig:lstm_second}) a lot of noise can be noted in the prediction of the \verb|pm| variable.
+The \verb|stator| variable prediction seems to follow the local trend pretty well, despite the fact that there is no direct formula connecting different physical quantities.
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=\linewidth, height=4cm]{imgs/lstm_pred_second.png}
+    \caption{Prediction of the LSTM model in the second task.}
+    \label{fig:lstm_second}
+\end{figure}
+
+The weighted loss has been applied also in this case (with the CNN model) and it improves, as expected, the prediction for higher temperature as shown in Figure \ref{fig:cnn_second}. Prediction for lower and mid range temperature is more noisy, thus the overall MSE decreases.
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=\linewidth, height=4cm]{imgs/pred_second_custom_loss.png}
+    \caption{Prediction of the CNN model in the second task with the custom loss.}
+    \label{fig:cnn_second}
+\end{figure}
 
 However, comparing results using only the loss value is not satisfying, because the model have to be light enough to be easily used by a car. So both number of parameters and performance are considered and plotted in the Figure \ref{fig:banana}.
 \begin{figure}[!h]
@@ -282,29 +301,11 @@ However, comparing results using only the loss value is not satisfying, because 
   \end{subfigure}
     \caption{Weighted MSE vs Number of parameters per model on the first (left) and second (rigth) task (on a logarithmic scale).}
     \label{fig:banana}
-\end{figure}\\
+\end{figure}
   
 As shown in this figure%Figure \ref{fig:banana}
 , numbers of parameters is one order of magnitude higher using the better architecture in the first task (CNN) instead of GRU, with little impact on prediction quality.
 In the second task however, the most-accurate model has the minor number of parameters, so its use is not discutible.
-
-In the second task performances are pretty good for the \verb|stator| variables, but not so good for the \verb|pm| variable. The best model in this task is the CNN. The RNN's behavior is improved too.\\
-In the prediction of the LSTM model on the test set (Figure \ref{fig:lstm_second}) a lot of noise can be noted in the prediction of the \verb|pm| variable.
-The \verb|stator| variable prediction seems to follow the local trend pretty well, despite the fact that there is no direct formula connecting different physical quantities.
-\begin{figure}[!h]
-    \centering
-    \includegraphics[width=\linewidth, height=4cm]{imgs/lstm_pred_second.png}
-    \caption{Prediction of the LSTM model in the second task.}
-    \label{fig:lstm_second}
-\end{figure}\\
-
-The weighted loss has been applied also in this case (with the CNN model) and it improves, as expected, the prediction for higher temperature as shown in Figure \ref{fig:cnn_second}. Prediction for lower and mid range temperature is more noisy, thus the overall MSE decreases.
-\begin{figure}[!h]
-    \centering
-    \includegraphics[width=\linewidth, height=4cm]{imgs/pred_second_custom_loss.png}
-    \caption{Prediction of the CNN model in the second task with the custom loss.}
-    \label{fig:cnn_second}
-\end{figure}\\
 
 Even creating a separate independent model for the \verb|pm| variable does not improve its performance.
 Obtaining real data from actual cars might be useful to improve the model further: 
