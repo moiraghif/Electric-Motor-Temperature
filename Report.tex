@@ -73,7 +73,7 @@
 
 \large
 \emph{Authors:}\\
-Federico Moiraghi -$799735$- f.moiraghimotta@campus.unimib.it \\
+Federico Moiraghi - $799735$ - f.moiraghimotta@campus.unimib.it \\
 Pranav Kasela - 846965 - p.kasela@campus.unimib.it \\
 Roberto Berlucchi - 847939 - r.berlucchi@campus.unimib.it \\
 [0.5cm] % Your name
@@ -86,7 +86,7 @@ Roberto Berlucchi - 847939 - r.berlucchi@campus.unimib.it \\
 %	DATE SECTION
 %----------------------------------------------------------------------------------------
 
-{\large 2019-2020}\\[1cm] % Date, change the \today to a set date if you want to be precise
+{\large 2019 - 2020}\\[1cm] % Date, change the \today to a set date if you want to be precise
 
 %----------------------------------------------------------------------------------------
 %	LOGO SECTION
@@ -102,59 +102,55 @@ Roberto Berlucchi - 847939 - r.berlucchi@campus.unimib.it \\
 
 
 \begin{abstract}
-  The present Report is a summary of methodologies used to predict the temperature of various part of a prototype electrical motor given some tests on a bench.
-  The resulting model have to yield acceptable predictions and to be light enough to be used by the car itself during its daily use: autos can start cooling components before the temperature grows critically (first task) or can estimate temperature without a specific sensor (second task), due to its cost and weakness, knowing only basic environmental information.
+  The present Report is a summary of methodologies used to predict the temperature of various part of a prototype electrical motor given some tests on a bench. The resulting model have to yield acceptable predictions and to be light enough to be used by the car itself during its daily use: autos can start cooling components before the temperature grows critically (first task) or can estimate temperature without a specific sensor (second task), due to its cost and weakness, knowing only basic environmental information.
 \end{abstract}
 
 \section{Introduction}
-The data set comprises several sensor data collected from a permanent magnet synchronous motor (PMSM) deployed on a test bench.
-The PMSM represents a German OEM's prototype model. 
-Test bench measurements were collected by the LEA department at Paderborn University.
+The data set comprises several sensor data collected from a permanent magnet synchronous motor (PMSM) deployed on a test bench. The PMSM represents a German OEM's prototype model and test bench measurements were collected by the LEA department at Paderborn University.
 
-The recordings are sampled at a frequency of $2Hz$ and is divided in various profiles and has a total of $998070$ observations. 
-Each profile indicates a different session and each session can have different length varying from one to six hours.\\
+The recordings are sampled at a frequency of $2Hz$ and is divided in various profiles and have a total of $998070$ observations. Each profile indicates a different session and each session can have different length varying from one to six hours.
+
 The input variables are:
 \begin{itemize}[topsep=0ex, noitemsep]
     \item \textbf{Ambient temperature} as measured by a thermal sensor located close to the stator;
-    \item \textbf{Coolant temperature}, the motor is water cooled and the measurement is taken at outflow;
+    \item \textbf{Coolant temperature} the motor is water cooled and the measurement is taken at outflow;
     \item The current and voltage are transformed through a $dq0$ transformation in a d-q coordinate system, it basically converts a three phase balanced reference system (in an AC system) into 2 coordinates, denoted by d and q, via a rotating reference frame with angle $\theta$.
     The currents are denoted by \textbf{i\_d} and \textbf{i\_q} and the voltages are denoted by \textbf{u\_d} and \textbf{u\_q};
     \item \textbf{Motor speed}.
 \end{itemize}
+
 The target variables are:
 \begin{itemize}[topsep=0ex, noitemsep]
-    \item \textbf{pm}: Permanent Magnet surface temperature representing the rotor temperature, measured with an infrared thermography unit.
+    \item \textbf{pm} Permanent Magnet surface temperature representing the rotor temperature, measured with an infrared thermography unit.
     \item \textbf{stator\_yoke}, \textbf{stator\_tooth}, \textbf{stator\_winding} temperature measured with a thermal sensor of the corresponding components.
 \end{itemize}
-In some of the variables, gaussian noise is introduced to simulate real world driving cycles.
-Being sensors data, missing values are replaced by the provider with the previous one, causing some flat areas when sensors fall offline for a long period. \\
-The main objective is to create a lightweight model to predict the \verb|pm| and \verb|stator| variables minimizing the MSE (because the model needs to be deployed with best cost-precision ratio); a secondary objective is to predict more accurately higher temperature than the lower temperature using a modified loss.
+In some of the variables, gaussian noise is introduced to simulate real world driving cycles. Being sensors data, missing values are replaced by the provider with the previous one, causing some flat areas when sensors fall offline for a long period. 
+
+The main objective is to create a lightweight model to predict the \verb|pm| and \verb|stator| variables minimizing the MSE (because the model needs to be deployed with best cost-precision ratio); a secondary goal is to predict more accurately higher temperature than the lower temperature using a modified loss.
 
 \section{Datasets}
-The data set can be found on Kaggle\footnote{\href{https://www.kaggle.com/wkirgsn/electric-motor-temperature}{https://www.kaggle.com/wkirgsn/electric-motor-temperature}}.
-From the data set the \verb|torque| feature is immediately excluded, as it is deemed unreliable from the data set provider itself.
+The data set can be found on Kaggle\footnote{\href{https://www.kaggle.com/wkirgsn/electric-motor-temperature}{https://www.kaggle.com/wkirgsn/electric-motor-temperature}}. From the data set the \verb|torque| feature is immediately excluded, as it is deemed unreliable from the data set provider itself.
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=10cm]{imgs/dist_plot.png}
     \caption{Distribution of the variables grouped by the division}
     \label{fig:dist_plot}
 \end{figure}\\
-The data set is divided into train, validation and test set: validation data consists of \verb|profile_id|s $20, 31, 46, 54, 62, 70, 79, 72$; the test set profiles are $35$ and $42$ and the training set consists of all the other profiles.
-Their relative distributions are plotted in the Figure \ref{fig:dist_plot}.\\
-In the Figure \ref{fig:corrplot} the correlation between the variables is shown.
-The target variables are highly correlated among themselves, in particular the \verb|stator| variables.
+The data set is divided into train, validation and test set: validation data consists of \verb|profile_id|s $20, 31, 46, 54, 62, 70, 79, 72$; the test set profiles are $35$ and $42$ and the training set consists of all the other profiles. Their relative distributions are plotted in the Figure \ref{fig:dist_plot}.
+
+In the Figure \ref{fig:corrplot} is shown the correlation between the variables and it is seen that the target variables are highly correlated among themselves, in particular the \verb|stator| variables.
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=7cm]{imgs/corrplot.png}
     \caption{Correlation Plot of the considered variables}
     \label{fig:corrplot}
-\end{figure}\\
-Data was already standardized by the provider (for some anonymization issues), but variables do not have a normal distribution thus a further normalization between 0 and 1 (calculated only on the training set) is applied.\\
+\end{figure}
+
+Data was already standardized by the provider (for some anonymization issues), but variables do not have a normal distribution, thus a further normalization between 0 and 1 (only on the training set) is applied.\\
 For each profile the data set is modified: to each row the lagged features are concatenated, the number of lags to keep can be changed, after this procedure the rows of all the profiles are united and shuffled through a custom data loader.
 
 \section{The Methodological Approach}
-Different \textit{Deep Learning} architectures are tried in order to compare them and choose the most suitable model to the problem: each model is built using \mintinline{python}|pytorch| and optimized with an Auto-ML algorithm using \mintinline{python}|sherpa| optimization library.
-In particular the \textit{Gaussian Process} (GP) surrogate model is used with the \textit{Expected Improvement} (EI) acquisition function to have a better exploration during the optimization.
+Different \textit{Deep Learning} architectures are tried in order to compare them and choose the most suitable model to the problem: each model is built using \mintinline{python}|pytorch| and optimized with an Auto-ML algorithm using \mintinline{python}|sherpa| optimization library. In particular the \textit{Gaussian Process} (GP) surrogate model is used with the \textit{Expected Improvement} (EI) acquisition function to have a better exploration during the optimization.
 
 Each model is optimized using Adam optimizer and a standard \textit{Mean Squared Error} (MSE) as the loss function in a first trial and then re-optimized using a custom weighted-version that assigns a triple importance to temperatures that surpass the value of the median (computed on the train set).
 %??? aah sì, io avevo messo a caso 0.5 che è il valore medio del range ahahahaha
@@ -193,9 +189,7 @@ The objective score is the MSE and it is calculated, after one epoch of the trai
 %roby explain your convolution idea! of course i do. fell free to add or modify :)
 A CNN model is also tested, even though the number of parameters increases compared to the other approach described before.
 
-For the first task, the model has 2 Convolutional layer each one followed by a Max Pooling layer, the last convolution-pooling block is flattenized and followed by 2 Fully Connected layer and the output layer.\\
-The second Convolutional and Fully Connected layers can be omitted if the number of filters or neurons are 0.\\
-For the second task the architecture is simplified: the poolings are removed.
+For the first task, the model has 2 Convolutional layer each one followed by a Max Pooling layer, the last convolution-pooling block is flattenized and followed by 2 Fully Connected layer and the output layer. The second Convolutional and Fully Connected layers can be omitted if the number of filters or neurons are 0. For the second task the architecture is simplified: the poolings are removed.
  
 The convolution happens on the vectors that contain all the variables for each specific time in $[t_{current-lag},t_{current-1}]$, where $t_{current}$ is the time at which the target needs to be predicted and lag is the temporal window that the model can see.
 Basically this model is a lighter version of a FC model (it has less number of weights) and it extracts the most relevant features to pass to the FC layers.
@@ -207,7 +201,7 @@ In this architecture the hyperparameters to optimize are the stride and kernel o
 \section{Results and Evaluation}
  
 \subsection{First Task}
-In the Figure \ref{fig:automl_mse} the result of hyper-parameter optimization are shown, for both models one predicting the \verb|pm| variable and the other predicting the three \verb|stator| variables, the RNN is excluded because of it's poor performance when compared to the other three models.
+In the Figure \ref{fig:automl_mse} the result of hyper-parameter optimization are shown: for both models one predicting the \verb|pm| variable and the other predicting the three \verb|stator| variables. The RNN is excluded because of it's poor performance when compared to the other three models.
 
 The results of the model on Training, Validation and Test are reported on the Table \ref{tab:first}, in this case all the output variables are concatenated together and a general loss is calculated.
 \begin{table}[!h]
@@ -221,7 +215,7 @@ The results of the model on Training, Validation and Test are reported on the Ta
     RNN & & & \\
     CNN & 2.32e-5 & 2.28e-5  & 2.39e-5 \\
     GRU & 1.29e-5 & 1.24e-5 & 1.28e-5 \\
-    LSTM & 0.98e-5 & 0.96e-5 & 1.0e-5 \\
+    LSTM & 0.98e-5 & 0.96e-5 & 1.00e-5 \\
     \hline
   \end{tabular}
   \caption{Results on Training, Validation and Test Set for the first task.}
@@ -235,8 +229,7 @@ The results of the model on Training, Validation and Test are reported on the Ta
     \label{fig:automl_mse}
 \end{figure}
   
-In addition, to improve predictions of critical temperatures a custom weighted version of MSE is used as described in the previous section.
-Results of hyperparameter optimization with the new loss are shown in the Figure \ref{fig:automl_custom}.\\
+In addition, to improve predictions of critical temperatures, a custom weighted version of MSE is used as described in the previous section. Results of hyperparameter optimization with the new loss are shown in the Figure \ref{fig:automl_custom}.\\
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_new_loss.png}
@@ -259,17 +252,15 @@ For the secondary task (predicting motor temperature without knowing previous va
 % The Results section is dedicated to presenting the actual results (i.e. measured and calculated quantities), not to discussing their meaning or interpretation. The results should be summarized using appropriate Tables and Figures (graphs or schematics). Every Figure and Table should have a legend that describes concisely what is contained or shown. Figure legends go below the figure, table legends above the table. Throughout the report, but especially in this section, pay attention to reporting numbers with an appropriate number of significant figures. 
 
 \section{Discussion}
-As shown in Figure \ref{fig:automl_mse} and Figure \ref{fig:automl_custom}, after the optimization process, the LSTM and GRU yield the best results (LSTM is slightly better), and CNN provides results comparable with these architecture.
-RNN however yields poor previsions when compared to the other architectures.
+As shown in Figure \ref{fig:automl_mse} and Figure \ref{fig:automl_custom}, after the optimization process, the LSTM and GRU yield the best results (LSTM is slightly better) and CNN provides results comparable with these architecture, while RNN yields poor previsions when compared to the other architectures.
 
-However, comparing results using only the loss value is not satisfying for the following task: the model have to be light enough to be easily used by a car. So both number of parameters and performance are considered and plotted in the Figure \ref{fig:banana}. %fede dovrà scegliere nome decente
+However, comparing results using only the loss value is not satisfying for the following task: the model have to be light enough to be easily used by a car. So both number of parameters and performance are considered and plotted in the Figure \ref{fig:banana}. 
+%fede dovrà scegliere nome decente
 
 % TODO: performance ~ numero di parametri
-% HERE IS FEDE GRAPH
+% HERE IS FEDE GRAPH - BANANA
 
-In the second task the performance are pretty good for the \verb|stator| variables but not so good for the \verb|pm| variable.
-The best model in this task is again the LSTM.
-The RNN's behavior is improved too.
+In the second task the performance are pretty good for the \verb|stator| variables, but not so good for the \verb|pm| variable. The best model in this task is again the LSTM. The RNN's behavior is improved too.\\
 In the prediction of the LSTM model on the test set (Figure \ref{fig:lstm_second}) a lot of noise can be noted in the prediction of the \verb|pm| variable.
 The \verb|stator| variable prediction seems to follow the local trend pretty well, especially, in a case where there is no direct formula connecting different physical quantities.
 
@@ -281,7 +272,7 @@ The \verb|stator| variable prediction seems to follow the local trend pretty wel
 \end{figure}
 
 
-The weighted loss has been applied also in this case (with the CNN model), it improves, as expected, the prediction for higher temperature as shown in Figure \ref{fig:cnn_second}, the prediction for lower and mid range temperature is more noisy, thus the overall MSE decreases.
+The weighted loss has been applied also in this case (with the CNN model) and it improves, as expected, the prediction for higher temperature as shown in Figure \ref{fig:cnn_second}. The prediction for lower and mid range temperature is more noisy, thus the overall MSE decreases.
 
 \begin{figure}[!h]
     \centering
@@ -291,6 +282,7 @@ The weighted loss has been applied also in this case (with the CNN model), it im
 \end{figure}
 
 Even creating a separate independent model for the \verb|pm| variable doesn't improve it's performance.
+
 % The discussion section aims at interpreting the results in light of the project's objectives. The most important goal of this section is to interpret the results so that the reader is informed of the insight or answers that the results provide. This section should also present an evaluation of the particular approach taken by the group. For example: Based on the results, how could the experimental procedure be improved? What additional, future work may be warranted? What recommendations can be drawn?
 
 
@@ -318,10 +310,10 @@ Even creating a separate independent model for the \verb|pm| variable doesn't im
 %   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@              
 %       @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@                  
 %               @@@@@@@@@@@@@@@@@@@@                        
-The recursive models, since they are used for this king of data/objective, are expected to work well, but reading enough literature\cite{cnn_time}\cite{cnn_time_2}, it can be deduced that the CNN should also work well, this was a confirmation of this fact: there performance are at least comparable to the recursive models.
-This report cannot be a proof of them working better or worse because NAS was not done for either model, only the hyper parameter were optimized with a simple pseudo NAS, where the number of layers can vary in some cases.
+The recursive models, since they are used for this king of data/objective, are expected to work well, but reading enough literature\cite{cnn_time}\cite{cnn_time_2}, it can be deduced that the CNN should also work well. This work was a confirmation of this fact: there performance are at least comparable to the recursive models. \\
+This report, however, cannot be a proof of them working better or worse because NAS was not done for either model, only the hyper parameter were optimized with a simple pseudo NAS where the number of layers can vary in some cases.
 
-The target variables have a normal distribution when collected from different independent profiles, but in each profile the distribution is not normal, thus the optimal predictor for  a series might not be linear and the arima ACF/PACF plot has different ARIMA coefficients and components so for each series a new ARIMA needs to be trained making it unpractical to use, but the deep learning model generalizes well on the test set, if the model needs to be simplified even more, a great option could be an exponential smoothing model for the first task and a generalized linear regression for the second task given the high correlation among some of the variables or a combination of both.
+The target variables have a normal distribution when collected from different independent profiles, but in each profile the distribution is not normal, thus the optimal predictor for a series might not be linear and the arima ACF/PACF plot has different ARIMA coefficients and components so for each series a new ARIMA needs to be trained making it unpractical to use, but the deep learning model generalizes well on the test set. If the model needs to be simplified even more, a great option could be an exponential smoothing model for the first task and a generalized linear regression for the second task given the high correlation among some of the variables or a combination of both.
 
 To improve the second task models, recursive models can be used in a different way: after the prefixed lag number of event have taken place, the predicted values of past can be used with the model created in the first task to `smoothen' the model's prediction. 
 
