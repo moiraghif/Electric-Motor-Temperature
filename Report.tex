@@ -242,6 +242,23 @@ In addition, to improve predictions of critical temperatures, a custom weighted 
 
 \subsection{Second Task}
 For the secondary task (predicting motor temperature without knowing previous values) results of hyperparameters optimization are shown in the figure \ref{fig:second_task}:
+\begin{table}[!h]
+  \centering
+  \begin{tabular}{|l|c|c|c|c|c|c|}
+    \hline
+    & \multicolumn{3}{|c|}{MSE} & \multicolumn{3}{|c|}{Weighted MSE} \\
+    \hline
+    Models & Train & Validation & Test & Train & Validation & Test \\
+    \hline
+    RNN & & & & & &\\
+    CNN & 0.0121 & 0.0122  & 0.0126 &0.0140 &0.0142 & 0.0141\\
+    LSTM & 0.0143 & 0.0139 & 0.0149 & NA & NA & NA\\
+    \hline
+  \end{tabular}
+  \caption{Results on Training, Validation and Test Set for the second task.}
+  \label{tab:first}
+\end{table}
+
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\linewidth, height=4cm]{imgs/comparison_MSE_second.png}
