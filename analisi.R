@@ -82,7 +82,7 @@ log_lstm <- read_clean("./results/AutoML_LSTM_new_loss.csv")
 log_gru  <- read_clean("./results/AutoML_GRU_new_loss.csv")
 log_cnn  <- read_clean("./results/AutoML_CNN_newLoss.csv")
 prepare_for_comparison(log_rnn, log_lstm, log_gru, log_cnn) %>%
-    plot_comparison(NA, 1e-5) %>%
+    plot_comparison(NA, 9e-5) %>%
     ggsave(filename = "./imgs/comparison_MSE_new_loss.png", device = png(),
            width = 15, height = 5)
 

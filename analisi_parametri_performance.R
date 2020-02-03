@@ -68,10 +68,10 @@ tibble(
 tibble(
     model = c("CNN", "LSTM", "RNN"),
     loss = c(0.012622386947383202,  # CNN
-             0.0170904577741073,  # LSTM
+             0.014896523450238093,  # LSTM
              0.02316238535651421),  # RNN (ok)
     params = c(9470,   # CNN (ok?)
-               22192,    # LSTM (ok?)
+               8564,    # LSTM (ok?)
                1740)) %>%  # RNN (ok)
     plot_comparison("MSE", 2)
 
